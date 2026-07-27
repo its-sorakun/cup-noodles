@@ -35,7 +35,7 @@ Get your personal streaming sanctuary hot and ready in less than two minutes:
 
 ### 1. Grab the Bowl
 ```bash
-git clone https://github.com/your-username/cup-noodles.git
+git clone https://github.com/its-sorakun/cup-noodles.git
 cd cup-noodles
 ```
 
