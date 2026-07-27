@@ -125,8 +125,11 @@
     } else if (route === "/settings") {
       await renderSettings();
     } else if (route.startsWith("/library/")) {
-      const name = decodeURIComponent(route.replace("/library/", ""));
-      await renderLibrary(name);
+      const raw = route.replace("/library/", "");
+      const segments = raw.split("/").map(decodeURIComponent);
+      const name = segments[0];
+      const subpath = segments.slice(1).filter(Boolean).join("/");
+      await renderLibrary(name, subpath);
     } else {
       renderNotFound();
     }
@@ -237,7 +240,40 @@
   // -----------------------------------------------------------------------
   // Page: Library — Media Grid
   // -----------------------------------------------------------------------
-  async function renderLibrary(name) {
+  function getFolderContents(files, subpath = "") {
+    const foldersMap = new Map();
+    const directFiles = [];
+    const prefix = subpath ? (subpath.endsWith("/") ? subpath : subpath + "/") : "";
+
+    for (const f of files) {
+      if (prefix && !f.relativePath.startsWith(prefix)) continue;
+
+      const remainder = prefix ? f.relativePath.slice(prefix.length) : f.relativePath;
+      const slashIndex = remainder.indexOf("/");
+
+      if (slashIndex !== -1) {
+        const folderName = remainder.substring(0, slashIndex);
+        if (!foldersMap.has(folderName)) {
+          foldersMap.set(folderName, 0);
+        }
+        foldersMap.set(folderName, foldersMap.get(folderName) + 1);
+      } else {
+        directFiles.push(f);
+      }
+    }
+
+    const folders = Array.from(foldersMap.entries())
+      .map(([name, count]) => ({
+        name,
+        count,
+        path: subpath ? `${subpath}/${name}` : name
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    return { folders, files: directFiles };
+  }
+
+  async function renderLibrary(name, subpath = "") {
     $content.innerHTML = renderLoadingGrid(12);
 
     let library;
@@ -266,14 +302,26 @@
       return;
     }
 
-    renderLibraryContent(library);
+    renderLibraryContent(library, subpath);
   }
 
-  function renderLibraryContent(library) {
-    const files = library.files;
+  function renderLibraryContent(library, subpath = "") {
+    const { folders, files: directFiles } = getFolderContents(library.files, subpath);
+    const viewLibrary = { ...library, files: directFiles };
     const isImage = library.type === "image";
     const isAudio = library.type === "audio";
     const gridClass = isImage ? "media-grid media-grid--wallpaper" : isAudio ? "" : "media-grid";
+    const isEmpty = folders.length === 0 && directFiles.length === 0;
+
+    const breadcrumbsHtml = subpath ? `
+      <div class="text-xs mb-1 font-medium flex items-center gap-1.5 flex-wrap" style="color: var(--text-tertiary);">
+        <a href="#/library/${encodeURIComponent(library.name)}" class="hover:underline transition-colors">${escapeHtml(library.name)}</a>
+        ${subpath.split("/").map((seg, idx, arr) => {
+          const pathSoFar = arr.slice(0, idx + 1).join("/");
+          return `<span>/</span> ${idx === arr.length - 1 ? `<span style="color: var(--text-secondary); font-weight: 600;">${escapeHtml(seg)}</span>` : `<a href="#/library/${encodeURIComponent(library.name)}/${pathSoFar.split("/").map(encodeURIComponent).join("/")}" class="hover:underline transition-colors">${escapeHtml(seg)}</a>`}`;
+        }).join("")}
+      </div>
+    ` : "";
 
     $content.innerHTML = `
       <div class="fade-in">
@@ -284,40 +332,107 @@
               ${ICONS.arrowLeft}
             </button>
             <div>
-              <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">${escapeHtml(library.name)}</h1>
-              <p class="text-xs mt-1" style="color: var(--text-secondary);">${files.length} file${files.length !== 1 ? "s" : ""}</p>
+              ${breadcrumbsHtml}
+              <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">${escapeHtml(subpath ? subpath.split("/").pop() : library.name)}</h1>
+              <p class="text-xs mt-1" style="color: var(--text-secondary);">
+                ${folders.length > 0 ? `${folders.length} folder${folders.length !== 1 ? 's' : ''}${directFiles.length > 0 ? ', ' : ''}` : ''}${directFiles.length > 0 ? `${directFiles.length} file${directFiles.length !== 1 ? 's' : ''}` : ''}
+                ${isEmpty ? '0 items' : ''}
+              </p>
             </div>
           </div>
 
-          <div class="search-bar w-full sm:w-72">
-            ${ICONS.search}
-            <input type="text" placeholder="Search files..." id="search-input">
-          </div>
+          ${!isEmpty ? `
+            <div class="search-bar w-full sm:w-72">
+              ${ICONS.search}
+              <input type="text" placeholder="Search in ${escapeHtml(subpath ? subpath.split("/").pop() : library.name)}..." id="search-input">
+            </div>
+          ` : ""}
         </div>
 
-        <!-- Media Grid -->
-        <div class="${gridClass} stagger-children" id="media-grid">
-          ${isAudio ? renderAudioList(library) : files.map((f, i) => renderMediaItem(library, f, i)).join("")}
-        </div>
+        ${isEmpty ? `
+          <div class="empty-state py-16 text-center">
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 icon-box">
+              ${ICONS.folder}
+            </div>
+            <div class="empty-state__title text-lg font-semibold">Empty Folder</div>
+            <div class="empty-state__desc text-sm" style="color: var(--text-tertiary);">No media files found directly in this directory or its subfolders.</div>
+          </div>
+        ` : `
+          <!-- Folders Grid -->
+          ${folders.length > 0 ? `
+            ${directFiles.length > 0 ? `<h2 class="text-xs font-bold uppercase tracking-wider mb-3 ml-1" style="color: var(--text-tertiary);">Folders</h2>` : ""}
+            <div class="media-grid gap-5 stagger-children mb-10" id="folders-grid">
+              ${folders.map((folder, i) => renderFolderCard(library, folder, i)).join("")}
+            </div>
+          ` : ""}
+
+          <!-- Files Grid / List -->
+          ${directFiles.length > 0 ? `
+            ${folders.length > 0 ? `<h2 class="text-xs font-bold uppercase tracking-wider mb-3 ml-1" style="color: var(--text-tertiary);">Files</h2>` : ""}
+            <div class="${gridClass} stagger-children" id="media-grid">
+              ${isAudio ? renderAudioList(viewLibrary) : directFiles.map((f, i) => renderMediaItem(viewLibrary, f, i)).join("")}
+            </div>
+          ` : ""}
+        `}
       </div>
     `;
 
     // Back button
-    document.getElementById("back-btn").addEventListener("click", () => navigate("/"));
+    document.getElementById("back-btn").addEventListener("click", () => {
+      if (!subpath) {
+        navigate("/");
+      } else {
+        const parentPath = subpath.includes("/") ? subpath.substring(0, subpath.lastIndexOf("/")) : "";
+        if (parentPath) {
+          navigate(`/library/${encodeURIComponent(library.name)}/${parentPath.split("/").map(encodeURIComponent).join("/")}`);
+        } else {
+          navigate(`/library/${encodeURIComponent(library.name)}`);
+        }
+      }
+    });
 
     // Search
     const searchInput = document.getElementById("search-input");
-    searchInput.addEventListener("input", (e) => {
-      state.searchQuery = e.target.value.toLowerCase();
-      filterMediaGrid(library);
+    if (searchInput) {
+      searchInput.addEventListener("input", (e) => {
+        state.searchQuery = e.target.value.toLowerCase();
+        filterMediaGrid(library);
+      });
+    }
+
+    // Click handlers for folders
+    document.querySelectorAll("[data-folder]").forEach((item) => {
+      item.addEventListener("click", () => {
+        const folderPath = item.dataset.folder;
+        navigate(`/library/${encodeURIComponent(library.name)}/${folderPath.split("/").map(encodeURIComponent).join("/")}`);
+      });
     });
 
     // Click handlers for media items
     if (!isAudio) {
-      attachMediaClickHandlers(library);
+      attachMediaClickHandlers(viewLibrary);
     } else {
-      attachAudioClickHandlers(library);
+      attachAudioClickHandlers(viewLibrary);
     }
+  }
+
+  function renderFolderCard(library, folder, index) {
+    return `
+      <div class="media-item cursor-pointer transition-all duration-300 hover:-translate-y-1" data-folder="${escapeHtml(folder.path)}" data-name="${escapeHtml(folder.name.toLowerCase())}" id="folder-card-${index}">
+        <div class="media-item__thumb flex flex-col items-center justify-center p-4 relative" style="background: rgba(139, 92, 246, 0.05); border-bottom: 1px solid var(--glass-border);">
+          <div class="w-16 h-16 rounded-2xl flex items-center justify-center mb-2 icon-box transition-transform duration-300 transform hover:scale-110" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">
+            ${ICONS.folder || '📁'}
+          </div>
+          <span class="pill pill--purple text-xs font-semibold mt-1">${folder.count} file${folder.count !== 1 ? "s" : ""}</span>
+        </div>
+        <div class="media-item__info">
+          <div class="media-item__name font-semibold text-sm truncate flex items-center gap-2" title="${escapeHtml(folder.name)}">
+            <span>${escapeHtml(folder.name)}</span>
+          </div>
+          <div class="media-item__meta" style="color: var(--text-tertiary);">Folder &nbsp;·&nbsp; Click to explore</div>
+        </div>
+      </div>
+    `;
   }
 
   function renderMediaItem(library, file, index) {
