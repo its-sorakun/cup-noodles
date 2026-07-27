@@ -609,14 +609,7 @@
 
       const playlistUrl = `/api/transcode/${sessionId}/playlist.m3u8`;
 
-      if (statusEl) statusEl.textContent = `Transcoding ${quality} (server decoding)...`;
-
-      // First, fetch the playlist ourselves to catch server errors before hls.js
-      const playlistRes = await fetch(playlistUrl);
-      if (!playlistRes.ok) {
-        const errBody = await playlistRes.json().catch(() => ({}));
-        throw new Error(errBody.details || errBody.error || `Playlist returned ${playlistRes.status}`);
-      }
+      if (statusEl) statusEl.textContent = `Buffering ${quality} — building initial buffer...`;
 
       if (Hls.isSupported()) {
         // Android Chrome, Firefox, etc. — need hls.js
@@ -624,6 +617,17 @@
           enableWorker: true,
           lowLatencyMode: false,
           startLevel: -1,
+          // Playlist reload tuning for live transcoding
+          liveSyncDurationCount: 3,          // stay 3 segments behind live edge
+          levelLoadingMaxRetry: 10,          // retry playlist loads
+          levelLoadingRetryDelay: 1000,      // 1s between retries
+          manifestLoadingMaxRetry: 10,
+          manifestLoadingRetryDelay: 2000,   // 2s between manifest retries
+          fragLoadingMaxRetry: 6,
+          fragLoadingRetryDelay: 1000,
+          // Buffer settings
+          maxBufferLength: 30,               // buffer up to 30s ahead
+          maxMaxBufferLength: 60,
         });
         currentHlsInstance = hls;
         hls.loadSource(playlistUrl);
@@ -634,7 +638,16 @@
         });
         hls.on(Hls.Events.ERROR, (_, data) => {
           if (data.fatal) {
-            if (statusEl) statusEl.textContent = `HLS Error: ${data.type} — ${data.details}`;
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+              // Try to recover from network errors
+              if (statusEl) statusEl.textContent = `Recovering from network error...`;
+              hls.startLoad();
+            } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+              if (statusEl) statusEl.textContent = `Recovering from media error...`;
+              hls.recoverMediaError();
+            } else {
+              if (statusEl) statusEl.textContent = `HLS Error: ${data.type} — ${data.details}`;
+            }
           }
         });
       } else if (videoEl.canPlayType("application/vnd.apple.mpegurl")) {

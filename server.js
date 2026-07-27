@@ -209,7 +209,6 @@ app.post("/api/transcode/session", async (req, res) => {
       "-f", "hls",
       "-hls_time", "4",            // 4-second chunks
       "-hls_list_size", "0",       // keep all segments in playlist
-      "-hls_flags", "append_list", // do NOT delete segments — client needs them!
       "-hls_segment_type", "mpegts",
       "-hls_segment_filename", path.join(sessionDir, "seg%05d.ts"),
       playlistPath,
@@ -268,26 +267,36 @@ app.get("/api/transcode/:sessionId/playlist.m3u8", async (req, res) => {
 
   session.lastAccess = Date.now();
 
-  // Wait up to 15s for the playlist to appear (FFmpeg needs a moment to start)
+  // Wait for the playlist to exist AND have enough segments for smooth playback.
+  // We wait for at least 3 segments (~12s buffer) before serving the first
+  // playlist, so the player doesn't stall after 4 seconds.
   const playlistPath = session.playlistPath;
+  const MIN_SEGMENTS = 3;
   let playlistReady = false;
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 60; i++) {  // up to 30 seconds
     // If FFmpeg crashed, bail immediately
     if (session.error) {
       return res.status(500).json({ error: "FFmpeg failed", details: session.error });
     }
     try {
-      await fsPromises.access(playlistPath);
-      playlistReady = true;
-      break;
+      const content = await fsPromises.readFile(playlistPath, "utf-8");
+      // Count how many .ts segment references exist in the playlist
+      const segCount = content.split("\n").filter(l => l.trim().endsWith(".ts")).length;
+      // Also check if FFmpeg finished (ENDLIST tag present = full file transcoded)
+      const isComplete = content.includes("#EXT-X-ENDLIST");
+      if (segCount >= MIN_SEGMENTS || isComplete) {
+        playlistReady = true;
+        break;
+      }
     } catch {
-      await new Promise((r) => setTimeout(r, 500));
+      // File doesn't exist yet
     }
+    await new Promise((r) => setTimeout(r, 500));
   }
 
   // Final check after wait loop
   if (!playlistReady) {
-    const errMsg = session.error || "FFmpeg did not produce a playlist in time. Check that ffmpeg is installed and on your PATH.";
+    const errMsg = session.error || "FFmpeg did not produce enough segments in time. Check that ffmpeg is installed and on your PATH.";
     return res.status(503).json({ error: "Transcoding failed", details: errMsg });
   }
 
@@ -337,19 +346,44 @@ app.get("/api/transcode/:sessionId/:segment", async (req, res) => {
     return res.status(403).json({ error: "Access denied" });
   }
 
-  // Wait up to 10s for the segment to be written
-  for (let i = 0; i < 20; i++) {
+  // Wait for the segment to appear and be fully written.
+  // A segment is "done" when the NEXT segment exists or FFmpeg has exited.
+  let segExists = false;
+  for (let i = 0; i < 40; i++) {  // up to 20 seconds
     try {
       await fsPromises.access(segPath);
-      break;
+      segExists = true;
+
+      // Check if the segment is fully written:
+      // Either the next segment exists (FFmpeg moved on) or FFmpeg finished.
+      const segNum = parseInt(segName.replace(/[^0-9]/g, ""), 10);
+      const nextSeg = `seg${String(segNum + 1).padStart(5, "0")}.ts`;
+      const nextSegPath = path.join(session.dir, nextSeg);
+      try {
+        await fsPromises.access(nextSegPath);
+        break;  // next segment exists → current is complete
+      } catch {
+        // Next segment doesn't exist yet. Check if FFmpeg is done.
+        if (session.ffmpegProcess && session.ffmpegProcess.exitCode !== null) {
+          break;  // FFmpeg exited → this is the last segment, it's complete
+        }
+        // Still being written, wait a bit
+        await new Promise((r) => setTimeout(r, 500));
+      }
     } catch {
       await new Promise((r) => setTimeout(r, 500));
     }
   }
 
+  if (!segExists) {
+    return res.status(404).json({ error: "Segment not found" });
+  }
+
   try {
+    const stat = await fsPromises.stat(segPath);
     res.setHeader("Content-Type", "video/mp2t");
-    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Content-Length", stat.size);
+    res.setHeader("Cache-Control", "public, max-age=3600");  // segments are immutable once written
     res.setHeader("Access-Control-Allow-Origin", "*");
     fs.createReadStream(segPath).pipe(res);
   } catch {
