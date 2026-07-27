@@ -173,15 +173,15 @@
     const libs = state.libraries;
 
     $content.innerHTML = `
-      <div class="fade-in">
-        <div class="mb-10">
-          <h1 class="text-3xl sm:text-4xl font-bold mb-2 tracking-tight">Your Library</h1>
-          <p class="text-sm" style="color: var(--text-secondary);">
+      <div class="fade-in max-w-6xl mx-auto py-4">
+        <div class="mb-12 text-center">
+          <h1 class="text-3xl sm:text-5xl font-extrabold mb-3 tracking-tight">Your Library</h1>
+          <p class="text-sm sm:text-base font-medium" style="color: var(--text-secondary);">
             ${libs.length} collections &nbsp;·&nbsp; ${libs.reduce((a, l) => a + (l.fileCount || 0), 0)} total files
           </p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 stagger-children">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children justify-center mx-auto">
           ${libs.map((lib, i) => renderLibraryCard(lib, i)).join("")}
         </div>
       </div>
@@ -363,7 +363,7 @@
 
   function renderAudioList(library) {
     return `
-      <div class="flex flex-col gap-3 max-w-2xl">
+      <div class="flex flex-col gap-3 max-w-2xl mx-auto">
         ${library.files.map((f, i) => {
           const nameNoExt = f.name.replace(/\.[^.]+$/, "");
           return `
@@ -579,8 +579,8 @@
     }
 
     $content.innerHTML = `
-      <div class="fade-in max-w-3xl">
-        <div class="mb-10">
+      <div class="fade-in max-w-3xl mx-auto py-4">
+        <div class="mb-10 text-center sm:text-left">
           <h1 class="text-3xl font-bold tracking-tight mb-2">Settings</h1>
           <p class="text-sm" style="color: var(--text-secondary);">Configure your media library directories.</p>
         </div>
@@ -665,12 +665,12 @@
   // -----------------------------------------------------------------------
   function renderLoadingGrid(count) {
     return `
-      <div class="mt-16">
-        <div class="skeleton w-48 h-8 mb-4"></div>
-        <div class="skeleton w-64 h-4 mb-10"></div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="mt-8 max-w-6xl mx-auto">
+        <div class="skeleton w-56 h-9 mx-auto mb-3"></div>
+        <div class="skeleton w-64 h-5 mx-auto mb-12"></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-center mx-auto">
           ${Array(count).fill("").map(() => `
-            <div class="skeleton" style="height: 180px;"></div>
+            <div class="skeleton" style="height: 200px;"></div>
           `).join("")}
         </div>
       </div>

@@ -7,8 +7,9 @@
 *A self-hosted entertainment sanctuary crafted to showcase and enjoy your movies, anime catalogs, audio collections, and high-resolution wallpaper archives.*
 
 <br />
-
----
+<p align="center">
+  <img src="https://imgh.in/host/plz44n" alt="Cup Noodles Homepage" width="90%">
+</p>
 </div>
 
 ## 🌌 Why Cup Noodles?
@@ -48,7 +49,7 @@ npm install
 node server.js
 ```
 
-Once boiling, open your favorite web browser and dig in at **`http://127.0.0.1:1337`**!
+Once boiling, open your favorite web browser and dig in at **`http://localhost:1337`**!
 
 ---
 
