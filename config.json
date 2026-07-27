@@ -1,0 +1,50 @@
+{
+  "libraries": [
+    {
+      "name": "Wallpapers",
+      "type": "image",
+      "path": "D:\\ WALLPAPERS",
+      "icon": "image",
+      "description": "Desktop & mobile wallpapers"
+    },
+    {
+      "name": "Movies",
+      "type": "video",
+      "path": "",
+      "icon": "film",
+      "description": "Movie collection"
+    },
+    {
+      "name": "Anime",
+      "type": "video",
+      "path": "",
+      "icon": "tv",
+      "description": "Anime series & films"
+    },
+    {
+      "name": "TV Shows",
+      "type": "video",
+      "path": "",
+      "icon": "monitor",
+      "description": "TV series collection"
+    },
+    {
+      "name": "Music",
+      "type": "audio",
+      "path": "",
+      "icon": "music",
+      "description": "Music library"
+    },
+    {
+      "name": "Photos",
+      "type": "image",
+      "path": "",
+      "icon": "camera",
+      "description": "Personal photos"
+    }
+  ],
+  "server": {
+    "port": 1337,
+    "host": "0.0.0.0"
+  }
+}
