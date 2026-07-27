@@ -9,19 +9,8 @@
   <!-- Favicon (emoji fallback) -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🍜</text></svg>">
 
-  <!-- TailwindCSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-          },
-        },
-      },
-    };
-  </script>
+  <!-- Pre-compiled Tailwind Static CSS (zero runtime JS overhead, legacy friendly) -->
+  <link rel="stylesheet" href="/tailwind.css">
 
   <!-- Custom Styles -->
   <link rel="stylesheet" href="/style.css">
@@ -79,6 +68,11 @@
   <footer class="relative z-10 text-center py-6 px-4" style="color: var(--text-tertiary);">
     <p class="text-xs">🍜 Cup Noodles Media Server &nbsp;·&nbsp; localhost:1337</p>
   </footer>
+
+  <!-- Legacy Browser Polyfills (for older devices like iPad 2012 / iOS 9 & 10) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/core-js-bundle/3.38.1/min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/regenerator-runtime/0.14.1/runtime.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/3.6.20/fetch.min.js"></script>
 
   <!-- App Script -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>

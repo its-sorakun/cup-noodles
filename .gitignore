@@ -1,2 +1,18 @@
+# Dependencies
 node_modules
+
+# Local configuration & environment secrets
 config.json
+.env
+*.local
+
+# Transcoding streaming artifacts & temporary files
+*.m3u8
+*.ts
+*.log
+npm-debug.log*
+
+# OS generated metadata & thumbnail caches
+.DS_Store
+Thumbs.db
+desktop.ini

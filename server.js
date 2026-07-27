@@ -5,6 +5,7 @@ const fsPromises = require("node:fs/promises");
 const os = require("node:os");
 const { spawn } = require("node:child_process");
 const mime = require("mime-types");
+const babel = require("@babel/core");
 const { scanAll, scanByName, loadConfig } = require("./mediascanner");
 
 // ---------------------------------------------------------------------------
@@ -17,6 +18,33 @@ const HOST = CONFIG?.server?.host || "0.0.0.0";
 const app = express();
 
 app.use(express.json());
+
+// Intercept /app.js to serve an ES5-transpiled version via Babel (supports legacy iPads/iOS 9+ without manual builds)
+let cachedTranspiledAppJs = { mtimeMs: 0, code: "" };
+app.get("/app.js", async (req, res, next) => {
+  try {
+    const appJsPath = path.join(__dirname, "public", "app.js");
+    const stats = await fsPromises.stat(appJsPath);
+    if (stats.mtimeMs > cachedTranspiledAppJs.mtimeMs) {
+      console.log("[babel] Transpiling public/app.js to ES5 for legacy & modern browser compatibility...");
+      const rawCode = await fsPromises.readFile(appJsPath, "utf-8");
+      const result = babel.transformSync(rawCode, {
+        presets: [
+          ["@babel/preset-env", {
+            targets: "defaults, ie >= 11, ios >= 9",
+          }]
+        ],
+        sourceMaps: false,
+      });
+      cachedTranspiledAppJs = { mtimeMs: stats.mtimeMs, code: result.code };
+    }
+    res.setHeader("Content-Type", "application/javascript");
+    res.send(cachedTranspiledAppJs.code);
+  } catch (err) {
+    console.error("[babel] Transpilation failed, falling back to static file:", err.message);
+    next();
+  }
+});
 
 // Serve every file inside the "public" directory automatically.
 app.use(express.static(path.join(__dirname, "public")));

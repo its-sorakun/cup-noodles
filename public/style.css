@@ -431,19 +431,45 @@ body {
 .stagger-children > *:nth-child(10) { animation-delay: 0.30s; }
 .stagger-children > *:nth-child(n+11) { animation-delay: 0.33s; }
 
-/* --- Media Grid --- */
+/* --- Media Grid (with Legacy Flexbox Fallback) --- */
 .media-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 16px;
 }
 
-.media-grid--large {
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+.media-grid > * {
+  flex: 1 1 220px;
+  max-width: 320px;
 }
 
-.media-grid--wallpaper {
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+.media-grid--large > * {
+  flex: 1 1 280px;
+  max-width: 380px;
+}
+
+.media-grid--wallpaper > * {
+  flex: 1 1 300px;
+  max-width: 420px;
+}
+
+@supports (display: grid) {
+  .media-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+  .media-grid--large {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+  .media-grid--wallpaper {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+  .media-grid > *,
+  .media-grid--large > *,
+  .media-grid--wallpaper > * {
+    flex: initial;
+    max-width: none;
+  }
 }
 
 /* --- Media Item Card --- */
