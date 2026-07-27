@@ -155,7 +155,7 @@ const QUALITY_PRESETS = {
 // POST /api/transcode/session — register a file for transcoding, returns sessionId
 app.post("/api/transcode/session", async (req, res) => {
   try {
-    const { libraryName, relativePath, quality = "720p" } = req.body;
+    const { libraryName, relativePath, quality = "720p", startTime = 0 } = req.body;
     if (!libraryName || !relativePath) {
       return res.status(400).json({ error: "libraryName and relativePath are required" });
     }
@@ -190,6 +190,8 @@ app.post("/api/transcode/session", async (req, res) => {
     const targetH = parseInt(preset.resolution.split("x")[1]);
     const ffmpegArgs = [
       "-y",
+      // Seek to the requested start time (before -i for fast input seeking)
+      ...(startTime > 0 ? ["-ss", String(startTime)] : []),
       "-i", filePath,
       "-c:v", "libx264",          // H.264 — universally supported on phones
       "-preset", "veryfast",       // fast encoding, lower PC load

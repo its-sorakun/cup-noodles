@@ -562,6 +562,9 @@
     const statusEl = document.getElementById("transcode-status");
     if (!videoEl) return;
 
+    // Capture current playback position before switching
+    const savedTime = videoEl.currentTime || 0;
+
     // Kill any existing session
     if (currentTranscodeSessionId) {
       fetch(`/api/transcode/${currentTranscodeSessionId}`, { method: "DELETE" }).catch(() => {});
@@ -577,6 +580,12 @@
       if (statusEl) statusEl.textContent = "Direct stream";
       videoEl.src = api.streamUrl(library.name, file.relativePath);
       videoEl.load();
+      // Restore timestamp once metadata is loaded
+      if (savedTime > 0) {
+        videoEl.addEventListener("loadedmetadata", () => {
+          videoEl.currentTime = savedTime;
+        }, { once: true });
+      }
       videoEl.play().catch(() => {});
       return;
     }
@@ -588,7 +597,7 @@
       const res = await fetch("/api/transcode/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ libraryName: library.name, relativePath: file.relativePath, quality }),
+        body: JSON.stringify({ libraryName: library.name, relativePath: file.relativePath, quality, startTime: savedTime }),
       });
 
       if (!res.ok) {

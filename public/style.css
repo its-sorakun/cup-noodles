@@ -844,3 +844,60 @@ body {
 @keyframes fadeOut {
   to { opacity: 0; transform: translateY(8px) scale(0.96); }
 }
+
+/* =====================================================================
+   Performance: Reduced Motion & Low-Power Device Fallbacks
+   ===================================================================== */
+
+/* Respect OS-level "reduce motion" preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .bg-mesh, .bg-orb, .bg-orb--pink, .bg-orb--teal { display: none !important; }
+  .stagger-children > * { animation: none !important; opacity: 1 !important; }
+  .media-item:hover { transform: none; }
+  .glass-card:hover { transform: none; }
+}
+
+/* Fallback for devices that don't support backdrop-filter (old iPads, etc.) */
+@supports not (backdrop-filter: blur(1px)) {
+  .glass, .glass-heavy, .glass-card, .glass-nav {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .glass-nav {
+    background: var(--surface-0) !important;
+    opacity: 0.97;
+  }
+
+  .glass, .glass-card {
+    background: var(--surface-1) !important;
+  }
+
+  .player-overlay {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(0, 0, 0, 0.92) !important;
+  }
+
+  .player-close, .lightbox-nav {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(255, 255, 255, 0.18) !important;
+  }
+
+  /* Orbs and mesh are GPU-intensive with filter:blur(120px); hide them */
+  .bg-mesh, .bg-orb, .bg-orb--pink, .bg-orb--teal {
+    display: none !important;
+  }
+
+  .stagger-children > * {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
