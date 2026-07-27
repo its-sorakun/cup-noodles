@@ -544,15 +544,103 @@
   }
 
   // -----------------------------------------------------------------------
-  // Media Viewer (Lightbox / Video Player)
+  // Media Viewer (Lightbox / Video Player with HLS transcoding)
   // -----------------------------------------------------------------------
   let currentViewerIndex = 0;
   let currentViewerLibrary = null;
+  let currentTranscodeSessionId = null;
+  let currentHlsInstance = null;
 
   function openMediaViewer(library, index) {
     currentViewerLibrary = library;
     currentViewerIndex = index;
     renderViewer();
+  }
+
+  async function startTranscodeAndPlay(library, file, quality) {
+    const videoEl = document.getElementById("viewer-video");
+    const statusEl = document.getElementById("transcode-status");
+    if (!videoEl) return;
+
+    // Kill any existing session
+    if (currentTranscodeSessionId) {
+      fetch(`/api/transcode/${currentTranscodeSessionId}`, { method: "DELETE" }).catch(() => {});
+      currentTranscodeSessionId = null;
+    }
+    if (currentHlsInstance) {
+      currentHlsInstance.destroy();
+      currentHlsInstance = null;
+    }
+
+    if (quality === "direct") {
+      // Direct stream — no transcoding
+      if (statusEl) statusEl.textContent = "Direct stream";
+      videoEl.src = api.streamUrl(library.name, file.relativePath);
+      videoEl.load();
+      videoEl.play().catch(() => {});
+      return;
+    }
+
+    if (statusEl) statusEl.textContent = `Starting ${quality} transcode...`;
+    videoEl.src = "";
+
+    try {
+      const res = await fetch("/api/transcode/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ libraryName: library.name, relativePath: file.relativePath, quality }),
+      });
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.details || errBody.error || "Failed to start transcode session");
+      }
+      const { sessionId } = await res.json();
+      currentTranscodeSessionId = sessionId;
+
+      const playlistUrl = `/api/transcode/${sessionId}/playlist.m3u8`;
+
+      if (statusEl) statusEl.textContent = `Transcoding ${quality} (server decoding)...`;
+
+      // First, fetch the playlist ourselves to catch server errors before hls.js
+      const playlistRes = await fetch(playlistUrl);
+      if (!playlistRes.ok) {
+        const errBody = await playlistRes.json().catch(() => ({}));
+        throw new Error(errBody.details || errBody.error || `Playlist returned ${playlistRes.status}`);
+      }
+
+      if (Hls.isSupported()) {
+        // Android Chrome, Firefox, etc. — need hls.js
+        const hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: false,
+          startLevel: -1,
+        });
+        currentHlsInstance = hls;
+        hls.loadSource(playlistUrl);
+        hls.attachMedia(videoEl);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          if (statusEl) statusEl.textContent = `Streaming ${quality}`;
+          videoEl.play().catch(() => {});
+        });
+        hls.on(Hls.Events.ERROR, (_, data) => {
+          if (data.fatal) {
+            if (statusEl) statusEl.textContent = `HLS Error: ${data.type} — ${data.details}`;
+          }
+        });
+      } else if (videoEl.canPlayType("application/vnd.apple.mpegurl")) {
+        // Safari / iOS — native HLS support
+        videoEl.src = playlistUrl;
+        videoEl.addEventListener("loadedmetadata", () => {
+          if (statusEl) statusEl.textContent = `Streaming ${quality}`;
+          videoEl.play().catch(() => {});
+        });
+      } else {
+        throw new Error("HLS not supported in this browser");
+      }
+    } catch (err) {
+      if (statusEl) statusEl.textContent = `Transcode failed: ${err.message}`;
+    }
   }
 
   function renderViewer() {
@@ -563,7 +651,7 @@
     const isVideo = file.type === "video";
 
     // Remove existing overlay if any
-    closeViewer();
+    closeViewer(false); // false = don’t kill session (we'll restart fresh)
 
     const overlay = document.createElement("div");
     overlay.className = "player-overlay";
@@ -584,10 +672,18 @@
         ${isImage ? `
           <img src="${url}" alt="${escapeHtml(file.name)}" style="max-width: 92vw; max-height: 82vh; border-radius: var(--radius-md); box-shadow: 0 25px 100px -20px rgba(0,0,0,0.8);">
         ` : isVideo ? `
-          <video controls autoplay style="max-width: 92vw; max-height: 82vh; border-radius: var(--radius-md); box-shadow: 0 25px 100px -20px rgba(0,0,0,0.8);">
-            <source src="${url}" type="${getMimeFromExt(file.name)}">
-            Your browser does not support the video tag.
-          </video>
+          <div style="position:relative; max-width: 92vw;">
+            <video id="viewer-video" controls style="max-width: 92vw; max-height: 75vh; border-radius: var(--radius-md); box-shadow: 0 25px 100px -20px rgba(0,0,0,0.8); display:block;"></video>
+            <div style="margin-top: 10px; display:flex; flex-wrap:wrap; align-items:center; gap:8px; justify-content:center;">
+              <span id="transcode-status" style="font-size:11px; color: var(--text-tertiary); font-family: monospace;">Select quality to start</span>
+              <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;">
+                ${["1080p","720p","480p","360p"].map(q => `
+                  <button class="pill pill--blue transcode-quality-btn" data-quality="${q}" style="cursor:pointer; font-size:11px; padding:3px 10px;">${q}</button>
+                `).join("")}
+                <button class="pill transcode-quality-btn" data-quality="direct" style="cursor:pointer; font-size:11px; padding:3px 10px;" title="Direct stream — no transcoding, browser decodes">⚡ Direct</button>
+              </div>
+            </div>
+          </div>
         ` : ""}
         <div class="text-center">
           <p class="text-sm font-medium">${escapeHtml(nameNoExt)}</p>
@@ -599,12 +695,33 @@
     document.body.appendChild(overlay);
 
     // Close button
-    document.getElementById("viewer-close").addEventListener("click", closeViewer);
+    document.getElementById("viewer-close").addEventListener("click", () => closeViewer(true));
 
     // Click outside to close
     overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) closeViewer();
+      if (e.target === overlay) closeViewer(true);
     });
+
+    // Quality selector buttons
+    if (isVideo) {
+      overlay.querySelectorAll(".transcode-quality-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          // Highlight selected
+          overlay.querySelectorAll(".transcode-quality-btn").forEach(b => b.style.opacity = "0.5");
+          btn.style.opacity = "1";
+          startTranscodeAndPlay(library, file, btn.dataset.quality);
+        });
+      });
+      // Auto-start at 720p by default
+      setTimeout(() => {
+        const btn720 = overlay.querySelector('[data-quality="720p"]');
+        if (btn720) {
+          btn720.style.opacity = "1";
+          startTranscodeAndPlay(library, file, "720p");
+        }
+      }, 100);
+    }
 
     // Navigation
     if (hasMultiple) {
@@ -631,17 +748,26 @@
   }
 
   function viewerKeyHandler(e) {
-    if (e.key === "Escape") closeViewer();
+    if (e.key === "Escape") closeViewer(true);
     if (e.key === "ArrowLeft") navigateViewer(-1);
     if (e.key === "ArrowRight") navigateViewer(1);
   }
 
-  function closeViewer() {
+  function closeViewer(killSession = true) {
     const overlay = document.getElementById("media-viewer-overlay");
-    if (overlay) {
-      overlay.remove();
-    }
+    if (overlay) overlay.remove();
     document.removeEventListener("keydown", viewerKeyHandler);
+
+    if (killSession) {
+      if (currentHlsInstance) {
+        currentHlsInstance.destroy();
+        currentHlsInstance = null;
+      }
+      if (currentTranscodeSessionId) {
+        fetch(`/api/transcode/${currentTranscodeSessionId}`, { method: "DELETE" }).catch(() => {});
+        currentTranscodeSessionId = null;
+      }
+    }
   }
 
   function getMimeFromExt(name) {
