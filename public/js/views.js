@@ -1,15 +1,23 @@
-  // -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
   // Page: Login
   // -----------------------------------------------------------------------
   async function renderLogin() {
     $content.innerHTML = `
+      <!-- Absolute Top Left Logo -->
+      <div class="absolute top-6 left-6 sm:top-8 sm:left-10 flex items-center gap-3 z-50">
+        <span class="text-3xl" style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Segoe UI Symbol', 'Android Emoji', 'EmojiSymbols';">🍜</span>
+        <span class="text-xl font-extrabold tracking-tight" style="color: var(--text-primary);">
+          Cup Noodles
+        </span>
+      </div>
+
       <div class="weeb-login-wrapper fade-in">
         <div class="weeb-login-glass group">
           
-          <div class="relative z-10">
-            <div class="mb-10 text-center">
-              <h1 class="weeb-title">Cup Noodles <span style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Segoe UI Symbol', 'Android Emoji', 'EmojiSymbols';">🍜</span></h1>
-              <p class="weeb-subtitle">Sign in to your private vault</p>
+          <div class="relative z-10 w-full">
+            <div class="mb-8">
+              <h2 class="weeb-title text-3xl sm:text-4xl">おかえり、先輩！</h2>
+              <p class="weeb-subtitle">プライベート保管庫へサインインしてください<br><span class="text-xs opacity-75">(Please sign in to your private vault)</span></p>
             </div>
             
             <form id="login-form" class="space-y-6">
