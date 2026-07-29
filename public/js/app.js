@@ -29,6 +29,20 @@
     const route = getRoute();
     updateNavActiveState(route);
 
+    if (route === "/login") {
+      document.getElementById("main-nav").style.display = "none";
+      await renderLogin();
+      return;
+    }
+    
+    // Check auth
+    if (!localStorage.getItem("jwt_token")) {
+      navigate("/login");
+      return;
+    }
+    
+    document.getElementById("main-nav").style.display = "flex";
+
     if (route === "/" || route === "") {
       await renderHome();
     } else if (route === "/settings") {
@@ -131,5 +145,11 @@
   document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("hashchange", handleRoute);
     ThemeManager.init();
+    
+    const $logoutBtn = document.getElementById("logout-btn");
+    if ($logoutBtn) {
+      $logoutBtn.addEventListener("click", () => api.logout());
+    }
+
     handleRoute();
   });

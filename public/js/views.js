@@ -1,3 +1,76 @@
+  // -----------------------------------------------------------------------
+  // Page: Login
+  // -----------------------------------------------------------------------
+  async function renderLogin() {
+    $content.innerHTML = `
+      <div class="weeb-login-wrapper fade-in">
+        <div class="weeb-login-glass group">
+          <!-- Ambient glowing backgrounds behind the glass -->
+          <div class="weeb-login-orb-pink"></div>
+          <div class="weeb-login-orb-blue"></div>
+          
+          <div class="relative z-10">
+            <div class="mb-10 text-center">
+              <h1 class="weeb-title">Cup Noodles 🍜</h1>
+              <p class="weeb-subtitle">カップヌードル</p>
+            </div>
+            
+            <form id="login-form" class="space-y-6">
+              <div class="weeb-input-group group/input">
+                <input type="text" id="username" required class="weeb-input peer" placeholder="Username" />
+                <label for="username" class="weeb-label">Username</label>
+                <div class="weeb-input-glow"></div>
+              </div>
+              
+              <div class="weeb-input-group group/input">
+                <input type="password" id="password" required class="weeb-input peer" placeholder="Password" />
+                <label for="password" class="weeb-label">Password</label>
+                <div class="weeb-input-glow"></div>
+              </div>
+
+              <div id="login-error" class="text-pink-500 text-sm text-center hidden font-bold drop-shadow-md bg-pink-500/10 py-2 rounded border border-pink-500/30 uppercase tracking-widest"></div>
+
+              <button type="submit" class="weeb-btn">
+                SYSTEM LOGIN //
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const user = document.getElementById("username").value;
+      const pass = document.getElementById("password").value;
+      const btn = e.target.querySelector("button");
+      const err = document.getElementById("login-error");
+      
+      err.classList.add("hidden");
+      btn.textContent = "AUTHENTICATING...";
+      btn.disabled = true;
+
+      try {
+        await api.login(user, pass);
+        // On success, redirect to home and refresh nav
+        navigate("/");
+        window.location.reload();
+      } catch (error) {
+        err.textContent = "Invalid username or password";
+        err.classList.remove("hidden");
+        btn.textContent = "UNLOCK VAULT";
+        btn.disabled = false;
+        
+        // Simple shake emulation
+        e.target.style.transform = "translateX(5px)";
+        setTimeout(() => e.target.style.transform = "translateX(-5px)", 100);
+        setTimeout(() => e.target.style.transform = "translateX(5px)", 200);
+        setTimeout(() => e.target.style.transform = "translateX(0)", 300);
+      }
+    });
+  }
+
+  // -----------------------------------------------------------------------
   // Page: Home — Dashboard
   // -----------------------------------------------------------------------
   async function renderHome() {

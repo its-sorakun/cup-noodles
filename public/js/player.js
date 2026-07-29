@@ -132,7 +132,7 @@
 
     // Kill any existing session
     if (currentTranscodeSessionId) {
-      fetch(`/api/transcode/${currentTranscodeSessionId}`, { method: "DELETE" }).catch(() => {});
+      api.authFetch(`/api/transcode/${currentTranscodeSessionId}`, { method: "DELETE" }).catch(() => {});
       currentTranscodeSessionId = null;
     }
     if (currentHlsInstance) {
@@ -162,7 +162,7 @@
     videoEl.src = "";
 
     try {
-      const res = await fetch("/api/transcode/session", {
+      const res = await api.authFetch("/api/transcode/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ libraryName: library.name, relativePath: file.relativePath, quality, startTime: actualTime }),
@@ -497,7 +497,7 @@
         currentHlsInstance = null;
       }
       if (currentTranscodeSessionId) {
-        fetch(`/api/transcode/${currentTranscodeSessionId}`, { method: "DELETE" }).catch(() => {});
+        api.authFetch(`/api/transcode/${currentTranscodeSessionId}`, { method: "DELETE" }).catch(() => {});
         currentTranscodeSessionId = null;
       }
     }
@@ -549,7 +549,7 @@
     try {
       config = await api.getConfig();
       try {
-        const statsRes = await fetch("/api/thumbnails/cache");
+        const statsRes = await api.authFetch("/api/thumbnails/cache");
         cacheStats = await statsRes.json();
       } catch (e) { console.warn("Could not load cache stats"); }
     } catch (err) {
@@ -607,7 +607,7 @@
         clearBtn.disabled = true;
         clearBtn.textContent = "Clearing...";
         try {
-          const res = await fetch("/api/thumbnails/cache", { method: "DELETE" });
+          const res = await api.authFetch("/api/thumbnails/cache", { method: "DELETE" });
           const data = await res.json();
           showToast(`Cleared ${data.cleared || 0} cached thumbnails`);
           clearBtn.textContent = "Cleared!";

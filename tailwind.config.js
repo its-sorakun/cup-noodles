@@ -1,6 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ["./public/**/*.{html,js}"],
+  safelist: [
+    { pattern: /^weeb-/ }
+  ],
   theme: {
     extend: {
       fontFamily: {

@@ -1,6 +1,8 @@
 const express = require("express");
 const path = require("path");
 const fs = require("node:fs");
+const jwt = require("jsonwebtoken");
+const crypto = require("node:crypto");
 
 // Import modularized middlewares and routes
 const babelMiddleware = require("./middlewares/babel");
@@ -24,6 +26,57 @@ app.use(babelMiddleware);
 
 // Serve every file inside the "public" directory automatically
 app.use(express.static(path.join(__dirname, "public")));
+
+// ---------------------------------------------------------------------------
+// Authentication (JWT)
+// ---------------------------------------------------------------------------
+const AUTH_FILE = path.join(__dirname, "auth.json");
+
+function loadAuth() {
+  if (!fs.existsSync(AUTH_FILE)) {
+    const defaultAuth = {
+      username: "admin",
+      password: "admin",
+      jwtSecret: crypto.randomBytes(64).toString("hex")
+    };
+    fs.writeFileSync(AUTH_FILE, JSON.stringify(defaultAuth, null, 2));
+    return defaultAuth;
+  }
+  return JSON.parse(fs.readFileSync(AUTH_FILE, "utf-8"));
+}
+
+app.post("/api/login", (req, res) => {
+  const { username, password } = req.body;
+  const authConfig = loadAuth();
+
+  if (username === authConfig.username && password === authConfig.password) {
+    const token = jwt.sign({ username }, authConfig.jwtSecret, { expiresIn: "30d" });
+    return res.json({ success: true, token });
+  }
+
+  res.status(401).json({ error: "Invalid credentials" });
+});
+
+app.use("/api", (req, res, next) => {
+  if (req.path === "/login" || req.path === "/ping") return next();
+
+  let token = req.headers.authorization?.split(" ")[1];
+  if (!token && req.query.token) {
+    token = req.query.token;
+  }
+
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const authConfig = loadAuth();
+    jwt.verify(token, authConfig.jwtSecret);
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: "Invalid token" });
+  }
+});
 
 // Mount API routes
 app.use("/api/transcode", transcodeRoutes);
