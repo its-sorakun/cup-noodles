@@ -372,6 +372,12 @@
         else videoEl.pause();
       });
 
+      videoEl.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (videoEl.paused) videoEl.play();
+        else videoEl.pause();
+      });
+
       videoEl.addEventListener("play", () => playBtn.innerHTML = ICONS.pause);
       videoEl.addEventListener("pause", () => playBtn.innerHTML = ICONS.playSmall);
       
@@ -470,6 +476,14 @@
     if (e.key === "Escape") closeViewer(true);
     if (e.key === "ArrowLeft") navigateViewer(-1);
     if (e.key === "ArrowRight") navigateViewer(1);
+    if (e.code === "Space") {
+      const videoEl = document.getElementById("viewer-video");
+      if (videoEl) {
+        e.preventDefault();
+        if (videoEl.paused) videoEl.play();
+        else videoEl.pause();
+      }
+    }
   }
 
   function closeViewer(killSession = true) {
