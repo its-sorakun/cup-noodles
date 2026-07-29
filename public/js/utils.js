@@ -34,6 +34,7 @@
   // Utility helpers
   // -----------------------------------------------------------------------
   function formatSize(bytes) {
+    if (bytes === 0) return "0 B";
     if (!bytes) return "";
     const units = ["B", "KB", "MB", "GB", "TB"];
     let i = 0;

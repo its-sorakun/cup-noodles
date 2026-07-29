@@ -545,8 +545,13 @@
     $content.innerHTML = renderLoadingGrid(3);
 
     let config;
+    let cacheStats = { size: 0, count: 0 };
     try {
       config = await api.getConfig();
+      try {
+        const statsRes = await fetch("/api/thumbnails/cache");
+        cacheStats = await statsRes.json();
+      } catch (e) { console.warn("Could not load cache stats"); }
     } catch (err) {
       $content.innerHTML = renderError("Failed to load settings", err.message);
       return;
@@ -577,11 +582,14 @@
           </div>
         </div>
 
-        <div class="glass p-5 mt-4">
+        <div class="glass p-5 mt-8">
           <h3 class="text-sm font-semibold mb-3">Storage & Cache</h3>
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm font-medium">Thumbnail Cache</p>
+              <p class="text-sm font-medium flex items-center gap-2">
+                Thumbnail Cache 
+                <span class="pill pill--purple text-[10px] py-0.5" id="cache-stats-badge">${cacheStats.count} files (${formatSize(cacheStats.size)})</span>
+              </p>
               <p class="text-xs" style="color: var(--text-tertiary);">Clear cached video and image thumbnails to free up disk space.</p>
             </div>
             <button class="btn-glass" id="clear-cache-btn" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">
@@ -603,6 +611,8 @@
           const data = await res.json();
           showToast(`Cleared ${data.cleared || 0} cached thumbnails`);
           clearBtn.textContent = "Cleared!";
+          const badge = document.getElementById("cache-stats-badge");
+          if (badge) badge.textContent = "0 files (0 B)";
           setTimeout(() => {
             clearBtn.textContent = "Clear Cache";
             clearBtn.disabled = false;

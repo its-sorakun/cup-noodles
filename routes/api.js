@@ -301,6 +301,25 @@ router.get("/thumbnail/:libraryName/{*filePath}", async (req, res) => {
   }
 });
 
+// Get thumbnail cache stats
+router.get("/thumbnails/cache", async (req, res) => {
+  try {
+    const files = await fsPromises.readdir(THUMB_CACHE_DIR);
+    let size = 0;
+    let count = 0;
+    for (const file of files) {
+      if (file.endsWith(".jpg")) {
+        const stat = await fsPromises.stat(path.join(THUMB_CACHE_DIR, file));
+        size += stat.size;
+        count++;
+      }
+    }
+    res.json({ size, count });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to get cache stats", details: err.message });
+  }
+});
+
 // Clear thumbnail cache
 router.delete("/thumbnails/cache", async (req, res) => {
   try {
