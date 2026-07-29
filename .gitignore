@@ -3,6 +3,7 @@ node_modules
 
 # Local configuration & environment secrets
 config.json
+auth.json
 .env
 *.local
 

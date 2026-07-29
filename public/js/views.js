@@ -3,10 +3,10 @@
   // -----------------------------------------------------------------------
   async function renderLogin() {
     $content.innerHTML = `
-      <!-- Absolute Top Left Logo -->
-      <div class="absolute top-6 left-6 sm:top-8 sm:left-10 flex items-center gap-3 z-50">
-        <span class="text-3xl" style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Segoe UI Symbol', 'Android Emoji', 'EmojiSymbols';">🍜</span>
-        <span class="text-xl font-extrabold tracking-tight" style="color: var(--text-primary);">
+      <!-- Absolute Top Center Logo -->
+      <div class="absolute top-10 sm:top-16 left-1/2 -translate-x-1/2 flex items-center gap-4 z-50 w-full justify-center">
+        <span class="text-4xl sm:text-5xl" style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Segoe UI Symbol', 'Android Emoji', 'EmojiSymbols';">🍜</span>
+        <span class="text-3xl sm:text-4xl font-extrabold tracking-tight" style="color: var(--text-primary);">
           Cup Noodles
         </span>
       </div>
@@ -16,8 +16,14 @@
           
           <div class="relative z-10 w-full">
             <div class="mb-8">
-              <h2 class="weeb-title text-3xl sm:text-4xl">おかえり、先輩！</h2>
-              <p class="weeb-subtitle">プライベート保管庫へサインインしてください<br><span class="text-xs opacity-75">(Please sign in to your private vault)</span></p>
+              <h2 class="weeb-title text-3xl sm:text-4xl flex flex-col gap-2">
+                <span>Okaeri, Senpai! ~</span>
+                <span class="text-xl sm:text-2xl opacity-40 font-bold">おかえり、先輩！</span>
+              </h2>
+              <p class="weeb-subtitle">
+                Please sign in to your personal vault<br>
+                <span class="text-xs opacity-50 mt-1 inline-block">(プライベート保管庫へサインインしてください)</span>
+              </p>
             </div>
             
             <form id="login-form" class="space-y-6">
@@ -94,7 +100,10 @@
     $content.innerHTML = `
       <div class="fade-in max-w-6xl mx-auto py-4">
         <div class="mb-12 text-center">
-          <h1 class="text-3xl sm:text-5xl font-extrabold mb-3 tracking-tight">Your Library</h1>
+          <h1 class="text-3xl sm:text-5xl font-extrabold mb-4 tracking-tight flex flex-col items-center gap-1">
+            <span>Your Library</span>
+            <span class="text-lg sm:text-xl font-bold opacity-30">ライブラリ</span>
+          </h1>
           <p class="text-sm sm:text-base font-medium" style="color: var(--text-secondary);">
             ${libs.length} collections &nbsp;·&nbsp; ${libs.reduce((a, l) => a + (l.fileCount || 0), 0)} total files
           </p>
