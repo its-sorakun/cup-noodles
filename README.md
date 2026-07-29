@@ -8,7 +8,7 @@
 
 <br />
 <p align="center">
-  <img src="https://imgh.in/host/plz44n" alt="Cup Noodles Homepage" width="90%">
+  <img src="https://imgh.in/host/plz44n" alt="Cup Noodles Homepage">
 </p>
 </div>
 
@@ -77,6 +77,21 @@ node server.js
 ```
 
 Once boiling, open your favorite web browser and dig in at **`http://localhost:1337`**!
+
+---
+
+## 🔒 Securing Your Vault
+
+By default, Cup Noodles is completely locked down to ensure your personal media stays private. A default `auth.json` file will be automatically generated the very first time you start the server.
+
+The default login credentials are:
+- **Username:** `admin`
+- **Password:** `admin`
+
+**To change your credentials:**
+1. Open the newly generated `auth.json` file in your Cup Noodles folder.
+2. Change the `"username"` and `"password"` values to your preferred secure credentials.
+3. Restart the server (press `Ctrl+C` in your terminal, then run `node server.js` again) for the changes to take effect.
 
 ---
 
