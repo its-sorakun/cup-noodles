@@ -34,10 +34,12 @@
       if (!res.ok) throw new Error("Login failed");
       const data = await res.json();
       localStorage.setItem("jwt_token", data.token);
+      document.cookie = `jwt_token=${data.token}; path=/; max-age=2592000`; // 30 days
       return data;
     },
     logout() {
       localStorage.removeItem("jwt_token");
+      document.cookie = "jwt_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       window.location.hash = "/login";
     },
     async getLibraries() {

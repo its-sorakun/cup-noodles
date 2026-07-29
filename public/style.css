@@ -5,6 +5,15 @@
 /* --- Google Font --- */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
+/* --- Hide Scrollbars --- */
+::-webkit-scrollbar {
+  display: none;
+}
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
 /* --- Root Variables (Dark Mode / Default) --- */
 :root, [data-theme="dark"] {
   /* Vibrant Deep Space / Indigo Nebula background gradient */

@@ -5,33 +5,28 @@
     $content.innerHTML = `
       <div class="weeb-login-wrapper fade-in">
         <div class="weeb-login-glass group">
-          <!-- Ambient glowing backgrounds behind the glass -->
-          <div class="weeb-login-orb-pink"></div>
-          <div class="weeb-login-orb-blue"></div>
           
           <div class="relative z-10">
             <div class="mb-10 text-center">
-              <h1 class="weeb-title">Cup Noodles 🍜</h1>
-              <p class="weeb-subtitle">カップヌードル</p>
+              <h1 class="weeb-title">Cup Noodles <span style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Segoe UI Symbol', 'Android Emoji', 'EmojiSymbols';">🍜</span></h1>
+              <p class="weeb-subtitle">Sign in to your private vault</p>
             </div>
             
             <form id="login-form" class="space-y-6">
               <div class="weeb-input-group group/input">
                 <input type="text" id="username" required class="weeb-input peer" placeholder="Username" />
                 <label for="username" class="weeb-label">Username</label>
-                <div class="weeb-input-glow"></div>
               </div>
               
               <div class="weeb-input-group group/input">
                 <input type="password" id="password" required class="weeb-input peer" placeholder="Password" />
                 <label for="password" class="weeb-label">Password</label>
-                <div class="weeb-input-glow"></div>
               </div>
 
-              <div id="login-error" class="text-pink-500 text-sm text-center hidden font-bold drop-shadow-md bg-pink-500/10 py-2 rounded border border-pink-500/30 uppercase tracking-widest"></div>
+              <div id="login-error" class="text-red-400 text-sm text-center hidden font-medium py-2 rounded bg-red-500/10 border border-red-500/20"></div>
 
               <button type="submit" class="weeb-btn">
-                SYSTEM LOGIN //
+                Unlock Vault
               </button>
             </form>
           </div>

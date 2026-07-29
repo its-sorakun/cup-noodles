@@ -5,7 +5,6 @@ const jwt = require("jsonwebtoken");
 const crypto = require("node:crypto");
 
 // Import modularized middlewares and routes
-const babelMiddleware = require("./middlewares/babel");
 const apiRoutes = require("./routes/api");
 const transcodeRoutes = require("./routes/transcode");
 
@@ -20,9 +19,7 @@ const app = express();
 
 app.use(express.json());
 
-// Intercept requested .js files to serve an ES5-transpiled version via Babel
-// Supports legacy iPads/iOS 9+ natively without manual build steps
-app.use(babelMiddleware);
+
 
 // Serve every file inside the "public" directory automatically
 app.use(express.static(path.join(__dirname, "public")));
@@ -63,6 +60,12 @@ app.use("/api", (req, res, next) => {
   let token = req.headers.authorization?.split(" ")[1];
   if (!token && req.query.token) {
     token = req.query.token;
+  }
+  if (!token && req.headers.cookie) {
+    const match = req.headers.cookie.match(/(?:^|;\s*)jwt_token=([^;]*)/);
+    if (match) {
+      token = match[1];
+    }
   }
 
   if (!token) {

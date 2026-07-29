@@ -36,9 +36,15 @@
     }
     
     // Check auth
-    if (!localStorage.getItem("jwt_token")) {
+    const token = localStorage.getItem("jwt_token");
+    if (!token) {
       navigate("/login");
       return;
+    }
+    
+    // Sync to cookie for video playback if missing
+    if (!document.cookie.includes("jwt_token=")) {
+      document.cookie = `jwt_token=${token}; path=/; max-age=2592000`; // 30 days
     }
     
     document.getElementById("main-nav").style.display = "flex";

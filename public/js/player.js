@@ -185,6 +185,12 @@
       if (Hls.isSupported()) {
         // Android Chrome, Firefox, etc. — need hls.js
         const hls = new Hls({
+          xhrSetup: function(xhr, url) {
+            const token = localStorage.getItem("jwt_token");
+            if (token) {
+              xhr.setRequestHeader("Authorization", "Bearer " + token);
+            }
+          },
           enableWorker: true,
           lowLatencyMode: false,
           startLevel: -1,
@@ -222,12 +228,14 @@
           }
         });
       } else if (videoEl.canPlayType("application/vnd.apple.mpegurl")) {
-        // Safari / iOS — native HLS support
-        videoEl.src = playlistUrl;
+        // Native iOS fallback
+        const token = localStorage.getItem("jwt_token");
+        videoEl.src = token ? `${playlistUrl}?token=${token}` : playlistUrl;
+        
         videoEl.addEventListener("loadedmetadata", () => {
-          if (statusEl) statusEl.textContent = `Streaming ${quality}`;
+          setStatus("", false);
           videoEl.play().catch(() => {});
-        });
+        }, { once: true });
       } else {
         throw new Error("HLS not supported in this browser");
       }
