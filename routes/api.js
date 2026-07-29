@@ -3,9 +3,45 @@ const path = require("path");
 const fsPromises = require("node:fs/promises");
 const fs = require("node:fs");
 const mime = require("mime-types");
+const crypto = require("node:crypto");
+const { spawn } = require("node:child_process");
 const { scanAll, scanByName, loadConfig } = require("../mediascanner");
 
 const router = express.Router();
+
+// ---------------------------------------------------------------------------
+// Thumbnail Caching & Concurrency Queue
+// ---------------------------------------------------------------------------
+const THUMB_CACHE_DIR = path.join(__dirname, "..", ".thumbnails");
+if (!fs.existsSync(THUMB_CACHE_DIR)) {
+  fs.mkdirSync(THUMB_CACHE_DIR, { recursive: true });
+}
+
+// In-Memory Hash Map for O(1) cache lookups
+const thumbnailMap = new Map();
+try {
+  const existingFiles = fs.readdirSync(THUMB_CACHE_DIR);
+  for (const f of existingFiles) {
+    thumbnailMap.set(f, true);
+  }
+} catch (e) {
+  console.warn("Could not read thumbnail cache directory", e);
+}
+
+// FIFO Job Queue for ffmpeg processing
+const MAX_CONCURRENT_FFMPEG = 4;
+let activeFfmpegJobs = 0;
+const thumbnailQueue = [];
+
+function processThumbnailQueue() {
+  if (activeFfmpegJobs >= MAX_CONCURRENT_FFMPEG || thumbnailQueue.length === 0) return;
+  const job = thumbnailQueue.shift();
+  activeFfmpegJobs++;
+  job().finally(() => {
+    activeFfmpegJobs--;
+    processThumbnailQueue();
+  });
+}
 
 // Health check
 router.get("/ping", (req, res) => {
@@ -185,15 +221,35 @@ router.get("/thumbnail/:libraryName/{*filePath}", async (req, res) => {
     }
 
     const mimeType = mime.lookup(resolved) || "";
+    const isImage = mimeType.startsWith("image/");
+    const isVideo = mimeType.startsWith("video/");
 
-    if (mimeType.startsWith("image/")) {
+    if (!isImage && !isVideo) {
+      return res.status(204).end();
+    }
+
+    const width = parseInt(req.query.w) || 400;
+    const cacheKey = crypto.createHash("md5").update(resolved).digest("hex") + `_w${width}.jpg`;
+    const cachePath = path.join(THUMB_CACHE_DIR, cacheKey);
+
+    // O(1) Cache Hit
+    if (thumbnailMap.has(cacheKey)) {
+      res.setHeader("Content-Type", "image/jpeg");
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      const stream = fs.createReadStream(cachePath);
+      return stream.pipe(res);
+    }
+
+    if (isImage) {
       try {
         const sharp = require("sharp");
-        const width = parseInt(req.query.w) || 400;
         const thumbnail = await sharp(resolved)
           .resize(width, null, { fit: "inside", withoutEnlargement: true })
           .jpeg({ quality: 80 })
           .toBuffer();
+        
+        await fsPromises.writeFile(cachePath, thumbnail);
+        thumbnailMap.set(cacheKey, true);
 
         res.writeHead(200, {
           "Content-Type": "image/jpeg",
@@ -207,11 +263,57 @@ router.get("/thumbnail/:libraryName/{*filePath}", async (req, res) => {
         res.setHeader("Cache-Control", "public, max-age=86400");
         stream.pipe(res);
       }
-    } else {
-      res.status(204).end();
+    } else if (isVideo) {
+      // Queue ffmpeg job
+      const job = () => new Promise((resolveJob) => {
+        const args = [
+          "-y",
+          "-ss", "00:00:05.000",
+          "-i", resolved,
+          "-vframes", "1",
+          "-vf", `scale=${width}:-1`,
+          "-q:v", "2",
+          cachePath
+        ];
+        const ffmpeg = spawn("ffmpeg", args);
+        ffmpeg.on("close", (code) => {
+          if (code === 0) {
+            thumbnailMap.set(cacheKey, true);
+            res.setHeader("Content-Type", "image/jpeg");
+            res.setHeader("Cache-Control", "public, max-age=86400");
+            const stream = fs.createReadStream(cachePath);
+            stream.pipe(res);
+          } else {
+            res.status(204).end();
+          }
+          resolveJob();
+        });
+        ffmpeg.on("error", () => {
+          res.status(204).end();
+          resolveJob();
+        });
+      });
+      thumbnailQueue.push(job);
+      processThumbnailQueue();
     }
   } catch (err) {
     res.status(500).json({ error: "Thumbnail error", details: err.message });
+  }
+});
+
+// Clear thumbnail cache
+router.delete("/thumbnails/cache", async (req, res) => {
+  try {
+    const files = await fsPromises.readdir(THUMB_CACHE_DIR);
+    for (const file of files) {
+      if (file.endsWith(".jpg")) {
+        await fsPromises.unlink(path.join(THUMB_CACHE_DIR, file));
+      }
+    }
+    thumbnailMap.clear();
+    res.json({ success: true, cleared: files.length });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to clear cache", details: err.message });
   }
 });
 

@@ -278,31 +278,37 @@
   function renderMediaItem(library, file, index) {
     const isImage = file.type === "image";
     const isVideo = file.type === "video";
-    const thumbUrl = isImage ? api.thumbnailUrl(library.name, file.relativePath, 500) : "";
+    const thumbUrl = (isImage || isVideo) ? api.thumbnailUrl(library.name, file.relativePath, 500) : "";
 
     const nameNoExt = file.name.replace(/\.[^.]+$/, "");
     const ext = getFileExtension(file.name);
 
     return `
       <div class="media-item" data-index="${index}" data-name="${escapeHtml(file.name.toLowerCase())}" id="media-item-${index}">
-        ${isImage ? `
+        ${isImage || isVideo ? `
           <img 
             class="media-item__thumb" 
             src="${thumbUrl}" 
             alt="${escapeHtml(file.name)}"
             loading="lazy"
-            onerror="this.style.display='none'"
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
           >
-        ` : `
-          <div class="media-item__thumb flex items-center justify-center" style="background: var(--surface-2);">
+          <div class="media-item__thumb fallback-thumb flex items-center justify-center" style="background: var(--surface-2); display:none; position:absolute; top:0; left:0; width:100%; height:100%; z-index:1;">
             <div class="text-center">
               <div class="mb-2 opacity-40">${isVideo ? ICONS.film : ICONS.folder}</div>
               <span class="pill pill--blue text-xs">${ext}</span>
             </div>
           </div>
+        ` : `
+          <div class="media-item__thumb flex items-center justify-center" style="background: var(--surface-2);">
+            <div class="text-center">
+              <div class="mb-2 opacity-40">${ICONS.folder}</div>
+              <span class="pill pill--blue text-xs">${ext}</span>
+            </div>
+          </div>
         `}
         ${isVideo ? `
-          <div class="media-item__overlay">
+          <div class="media-item__overlay" style="z-index: 5;">
             <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(139, 92, 246, 0.7); backdrop-filter: blur(6px);">
               ${ICONS.play}
             </div>

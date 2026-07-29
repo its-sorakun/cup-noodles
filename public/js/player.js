@@ -576,8 +576,43 @@
             </div>
           </div>
         </div>
+
+        <div class="glass p-5 mt-4">
+          <h3 class="text-sm font-semibold mb-3">Storage & Cache</h3>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium">Thumbnail Cache</p>
+              <p class="text-xs" style="color: var(--text-tertiary);">Clear cached video and image thumbnails to free up disk space.</p>
+            </div>
+            <button class="btn-glass" id="clear-cache-btn" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">
+              Clear Cache
+            </button>
+          </div>
+        </div>
       </div>
     `;
+
+    // Attach clear cache handler
+    const clearBtn = document.getElementById("clear-cache-btn");
+    if (clearBtn) {
+      clearBtn.addEventListener("click", async () => {
+        clearBtn.disabled = true;
+        clearBtn.textContent = "Clearing...";
+        try {
+          const res = await fetch("/api/thumbnails/cache", { method: "DELETE" });
+          const data = await res.json();
+          showToast(`Cleared ${data.cleared || 0} cached thumbnails`);
+          clearBtn.textContent = "Cleared!";
+          setTimeout(() => {
+            clearBtn.textContent = "Clear Cache";
+            clearBtn.disabled = false;
+          }, 2000);
+        } catch (e) {
+          clearBtn.textContent = "Error";
+          clearBtn.disabled = false;
+        }
+      });
+    }
 
     // Attach save handlers
     document.querySelectorAll(".settings-save-btn").forEach((btn) => {
