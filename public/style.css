@@ -885,19 +885,6 @@ body {
    Performance: Reduced Motion & Low-Power Device Fallbacks
    ===================================================================== */
 
-/* Respect OS-level "reduce motion" preference */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-
-  .bg-mesh, .bg-orb, .bg-orb--pink, .bg-orb--teal { display: none !important; }
-  .stagger-children > * { animation: none !important; opacity: 1 !important; }
-  .media-item:hover { transform: none; }
-  .glass-card:hover { transform: none; }
-}
 
 /* Fallback for devices that don't support backdrop-filter (old iPads, etc.) */
 @supports not (backdrop-filter: blur(1px)) {

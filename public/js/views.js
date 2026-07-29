@@ -1,17 +1,18 @@
 // -----------------------------------------------------------------------
-  // Page: Login
-  // -----------------------------------------------------------------------
-  async function renderLogin() {
-    $content.innerHTML = `
-      <!-- Absolute Top Center Logo -->
-      <div class="absolute top-10 sm:top-16 left-1/2 -translate-x-1/2 flex items-center gap-4 z-50 w-full justify-center">
-        <span class="text-4xl sm:text-5xl" style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Segoe UI Symbol', 'Android Emoji', 'EmojiSymbols';">🍜</span>
-        <span class="text-3xl sm:text-4xl font-extrabold tracking-tight" style="color: var(--text-primary);">
-          Cup Noodles
-        </span>
-      </div>
+// Page: Login
+// -----------------------------------------------------------------------
+async function renderLogin() {
+  $content.innerHTML = `
+      <div class="weeb-login-wrapper fade-in flex-col gap-8 sm:gap-12">
+        
+        <!-- Centered Logo (Flow Layout) -->
+        <div class="flex justify-center items-center gap-4 w-full -mt-20 sm:-mt-24 mb-6 sm:mb-8">
+          <span class="text-4xl sm:text-5xl" style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Segoe UI Symbol', 'Android Emoji', 'EmojiSymbols';">🍜</span>
+          <span class="text-3xl sm:text-4xl font-extrabold tracking-tight" style="color: var(--text-primary);">
+            Cup Noodles
+          </span>
+        </div>
 
-      <div class="weeb-login-wrapper fade-in">
         <div class="weeb-login-glass group">
           
           <div class="relative z-10 w-full">
@@ -48,56 +49,56 @@
       </div>
     `;
 
-    document.getElementById("login-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const user = document.getElementById("username").value;
-      const pass = document.getElementById("password").value;
-      const btn = e.target.querySelector("button");
-      const err = document.getElementById("login-error");
-      
-      err.classList.add("hidden");
-      btn.textContent = "AUTHENTICATING...";
-      btn.disabled = true;
+  document.getElementById("login-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const user = document.getElementById("username").value;
+    const pass = document.getElementById("password").value;
+    const btn = e.target.querySelector("button");
+    const err = document.getElementById("login-error");
 
-      try {
-        await api.login(user, pass);
-        // On success, redirect to home and refresh nav
-        navigate("/");
-        window.location.reload();
-      } catch (error) {
-        err.textContent = "Invalid username or password";
-        err.classList.remove("hidden");
-        btn.textContent = "UNLOCK VAULT";
-        btn.disabled = false;
-        
-        // Simple shake emulation
-        e.target.style.transform = "translateX(5px)";
-        setTimeout(() => e.target.style.transform = "translateX(-5px)", 100);
-        setTimeout(() => e.target.style.transform = "translateX(5px)", 200);
-        setTimeout(() => e.target.style.transform = "translateX(0)", 300);
-      }
-    });
-  }
-
-  // -----------------------------------------------------------------------
-  // Page: Home — Dashboard
-  // -----------------------------------------------------------------------
-  async function renderHome() {
-    $content.innerHTML = renderLoadingGrid(6);
-    state.loading = true;
+    err.classList.add("hidden");
+    btn.textContent = "AUTHENTICATING...";
+    btn.disabled = true;
 
     try {
-      state.libraries = await api.getLibraries();
-    } catch (err) {
-      $content.innerHTML = renderError("Failed to load libraries", err.message);
-      return;
+      await api.login(user, pass);
+      // On success, redirect to home and refresh nav
+      navigate("/");
+      window.location.reload();
+    } catch (error) {
+      err.textContent = "Invalid username or password";
+      err.classList.remove("hidden");
+      btn.textContent = "UNLOCK VAULT";
+      btn.disabled = false;
+
+      // Simple shake emulation
+      e.target.style.transform = "translateX(5px)";
+      setTimeout(() => e.target.style.transform = "translateX(-5px)", 100);
+      setTimeout(() => e.target.style.transform = "translateX(5px)", 200);
+      setTimeout(() => e.target.style.transform = "translateX(0)", 300);
     }
+  });
+}
 
-    state.loading = false;
+// -----------------------------------------------------------------------
+// Page: Home — Dashboard
+// -----------------------------------------------------------------------
+async function renderHome() {
+  $content.innerHTML = renderLoadingGrid(6);
+  state.loading = true;
 
-    const libs = state.libraries;
+  try {
+    state.libraries = await api.getLibraries();
+  } catch (err) {
+    $content.innerHTML = renderError("Failed to load libraries", err.message);
+    return;
+  }
 
-    $content.innerHTML = `
+  state.loading = false;
+
+  const libs = state.libraries;
+
+  $content.innerHTML = `
       <div class="fade-in max-w-6xl mx-auto py-4">
         <div class="mb-12 text-center">
           <h1 class="text-3xl sm:text-5xl font-extrabold mb-4 tracking-tight flex flex-col items-center gap-1">
@@ -115,34 +116,34 @@
       </div>
     `;
 
-    // Attach click handlers
-    document.querySelectorAll("[data-library]").forEach((card) => {
-      card.addEventListener("click", () => {
-        navigate(`/library/${encodeURIComponent(card.dataset.library)}`);
-      });
+  // Attach click handlers
+  document.querySelectorAll("[data-library]").forEach((card) => {
+    card.addEventListener("click", () => {
+      navigate(`/library/${encodeURIComponent(card.dataset.library)}`);
     });
+  });
+}
+
+function renderLibraryCard(lib, index) {
+  const icon = ICONS[lib.icon] || ICONS.folder;
+  const glow = GLOW_COLORS[index % GLOW_COLORS.length];
+  const configured = lib.configured && lib.exists !== false;
+  const count = lib.fileCount || 0;
+
+  let statusPill = "";
+  if (!lib.configured) {
+    statusPill = `<span class="pill pill--pink">Not configured</span>`;
+  } else if (lib.exists === false) {
+    statusPill = `<span class="pill pill--pink">Path not found</span>`;
+  } else if (count === 0) {
+    statusPill = `<span class="pill">Empty</span>`;
+  } else {
+    statusPill = `<span class="pill pill--green">${count} file${count !== 1 ? "s" : ""}</span>`;
   }
 
-  function renderLibraryCard(lib, index) {
-    const icon = ICONS[lib.icon] || ICONS.folder;
-    const glow = GLOW_COLORS[index % GLOW_COLORS.length];
-    const configured = lib.configured && lib.exists !== false;
-    const count = lib.fileCount || 0;
+  const typeLabel = lib.type === "video" ? "Video" : lib.type === "image" ? "Images" : lib.type === "audio" ? "Audio" : "Mixed";
 
-    let statusPill = "";
-    if (!lib.configured) {
-      statusPill = `<span class="pill pill--pink">Not configured</span>`;
-    } else if (lib.exists === false) {
-      statusPill = `<span class="pill pill--pink">Path not found</span>`;
-    } else if (count === 0) {
-      statusPill = `<span class="pill">Empty</span>`;
-    } else {
-      statusPill = `<span class="pill pill--green">${count} file${count !== 1 ? "s" : ""}</span>`;
-    }
-
-    const typeLabel = lib.type === "video" ? "Video" : lib.type === "image" ? "Images" : lib.type === "audio" ? "Audio" : "Mixed";
-
-    return `
+  return `
       <div class="glass-card p-6 ${configured ? "" : "opacity-50"}" data-glow="${glow}" data-library="${escapeHtml(lib.name)}" id="library-card-${index}">
         <div class="flex items-start justify-between mb-4">
           <div class="w-12 h-12 rounded-xl flex items-center justify-center icon-box">
@@ -160,95 +161,95 @@
         </div>
       </div>
     `;
-  }
+}
 
-  // -----------------------------------------------------------------------
-  // Page: Library — Media Grid
-  // -----------------------------------------------------------------------
-  function getFolderContents(files, subpath = "") {
-    const foldersMap = new Map();
-    const directFiles = [];
-    const prefix = subpath ? (subpath.endsWith("/") ? subpath : subpath + "/") : "";
+// -----------------------------------------------------------------------
+// Page: Library — Media Grid
+// -----------------------------------------------------------------------
+function getFolderContents(files, subpath = "") {
+  const foldersMap = new Map();
+  const directFiles = [];
+  const prefix = subpath ? (subpath.endsWith("/") ? subpath : subpath + "/") : "";
 
-    for (const f of files) {
-      if (prefix && !f.relativePath.startsWith(prefix)) continue;
+  for (const f of files) {
+    if (prefix && !f.relativePath.startsWith(prefix)) continue;
 
-      const remainder = prefix ? f.relativePath.slice(prefix.length) : f.relativePath;
-      const slashIndex = remainder.indexOf("/");
+    const remainder = prefix ? f.relativePath.slice(prefix.length) : f.relativePath;
+    const slashIndex = remainder.indexOf("/");
 
-      if (slashIndex !== -1) {
-        const folderName = remainder.substring(0, slashIndex);
-        if (!foldersMap.has(folderName)) {
-          foldersMap.set(folderName, 0);
-        }
-        foldersMap.set(folderName, foldersMap.get(folderName) + 1);
-      } else {
-        directFiles.push(f);
+    if (slashIndex !== -1) {
+      const folderName = remainder.substring(0, slashIndex);
+      if (!foldersMap.has(folderName)) {
+        foldersMap.set(folderName, 0);
       }
+      foldersMap.set(folderName, foldersMap.get(folderName) + 1);
+    } else {
+      directFiles.push(f);
     }
-
-    const folders = Array.from(foldersMap.entries())
-      .map(([name, count]) => ({
-        name,
-        count,
-        path: subpath ? `${subpath}/${name}` : name
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    return { folders, files: directFiles };
   }
 
-  async function renderLibrary(name, subpath = "") {
-    $content.innerHTML = renderLoadingGrid(12);
+  const folders = Array.from(foldersMap.entries())
+    .map(([name, count]) => ({
+      name,
+      count,
+      path: subpath ? `${subpath}/${name}` : name
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
-    let library;
-    try {
-      library = await api.getLibrary(name);
-    } catch (err) {
-      $content.innerHTML = renderError(`Library "${name}" not found`, err.message);
-      return;
-    }
+  return { folders, files: directFiles };
+}
 
-    state.currentLibrary = library;
-    state.searchQuery = "";
+async function renderLibrary(name, subpath = "") {
+  $content.innerHTML = renderLoadingGrid(12);
 
-    if (!library.configured) {
-      $content.innerHTML = renderEmptyLibrary(library, "not-configured");
-      return;
-    }
-
-    if (library.exists === false) {
-      $content.innerHTML = renderEmptyLibrary(library, "not-found");
-      return;
-    }
-
-    if (library.files.length === 0) {
-      $content.innerHTML = renderEmptyLibrary(library, "empty");
-      return;
-    }
-
-    renderLibraryContent(library, subpath);
+  let library;
+  try {
+    library = await api.getLibrary(name);
+  } catch (err) {
+    $content.innerHTML = renderError(`Library "${name}" not found`, err.message);
+    return;
   }
 
-  function renderLibraryContent(library, subpath = "") {
-    const { folders, files: directFiles } = getFolderContents(library.files, subpath);
-    const viewLibrary = { ...library, files: directFiles };
-    const isImage = library.type === "image";
-    const isAudio = library.type === "audio";
-    const gridClass = isImage ? "media-grid media-grid--wallpaper" : isAudio ? "" : "media-grid";
-    const isEmpty = folders.length === 0 && directFiles.length === 0;
+  state.currentLibrary = library;
+  state.searchQuery = "";
 
-    const breadcrumbsHtml = subpath ? `
+  if (!library.configured) {
+    $content.innerHTML = renderEmptyLibrary(library, "not-configured");
+    return;
+  }
+
+  if (library.exists === false) {
+    $content.innerHTML = renderEmptyLibrary(library, "not-found");
+    return;
+  }
+
+  if (library.files.length === 0) {
+    $content.innerHTML = renderEmptyLibrary(library, "empty");
+    return;
+  }
+
+  renderLibraryContent(library, subpath);
+}
+
+function renderLibraryContent(library, subpath = "") {
+  const { folders, files: directFiles } = getFolderContents(library.files, subpath);
+  const viewLibrary = { ...library, files: directFiles };
+  const isImage = library.type === "image";
+  const isAudio = library.type === "audio";
+  const gridClass = isImage ? "media-grid media-grid--wallpaper" : isAudio ? "" : "media-grid";
+  const isEmpty = folders.length === 0 && directFiles.length === 0;
+
+  const breadcrumbsHtml = subpath ? `
       <div class="text-xs mb-1 font-medium flex items-center gap-1.5 flex-wrap" style="color: var(--text-tertiary);">
         <a href="#/library/${encodeURIComponent(library.name)}" class="hover:underline transition-colors">${escapeHtml(library.name)}</a>
         ${subpath.split("/").map((seg, idx, arr) => {
-          const pathSoFar = arr.slice(0, idx + 1).join("/");
-          return `<span>/</span> ${idx === arr.length - 1 ? `<span style="color: var(--text-secondary); font-weight: 600;">${escapeHtml(seg)}</span>` : `<a href="#/library/${encodeURIComponent(library.name)}/${pathSoFar.split("/").map(encodeURIComponent).join("/")}" class="hover:underline transition-colors">${escapeHtml(seg)}</a>`}`;
-        }).join("")}
+    const pathSoFar = arr.slice(0, idx + 1).join("/");
+    return `<span>/</span> ${idx === arr.length - 1 ? `<span style="color: var(--text-secondary); font-weight: 600;">${escapeHtml(seg)}</span>` : `<a href="#/library/${encodeURIComponent(library.name)}/${pathSoFar.split("/").map(encodeURIComponent).join("/")}" class="hover:underline transition-colors">${escapeHtml(seg)}</a>`}`;
+  }).join("")}
       </div>
     ` : "";
 
-    $content.innerHTML = `
+  $content.innerHTML = `
       <div class="fade-in">
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
@@ -302,47 +303,47 @@
       </div>
     `;
 
-    // Back button
-    document.getElementById("back-btn").addEventListener("click", () => {
-      if (!subpath) {
-        navigate("/");
-      } else {
-        const parentPath = subpath.includes("/") ? subpath.substring(0, subpath.lastIndexOf("/")) : "";
-        if (parentPath) {
-          navigate(`/library/${encodeURIComponent(library.name)}/${parentPath.split("/").map(encodeURIComponent).join("/")}`);
-        } else {
-          navigate(`/library/${encodeURIComponent(library.name)}`);
-        }
-      }
-    });
-
-    // Search
-    const searchInput = document.getElementById("search-input");
-    if (searchInput) {
-      searchInput.addEventListener("input", (e) => {
-        state.searchQuery = e.target.value.toLowerCase();
-        filterMediaGrid(library);
-      });
-    }
-
-    // Click handlers for folders
-    document.querySelectorAll("[data-folder]").forEach((item) => {
-      item.addEventListener("click", () => {
-        const folderPath = item.dataset.folder;
-        navigate(`/library/${encodeURIComponent(library.name)}/${folderPath.split("/").map(encodeURIComponent).join("/")}`);
-      });
-    });
-
-    // Click handlers for media items
-    if (!isAudio) {
-      attachMediaClickHandlers(viewLibrary);
+  // Back button
+  document.getElementById("back-btn").addEventListener("click", () => {
+    if (!subpath) {
+      navigate("/");
     } else {
-      attachAudioClickHandlers(viewLibrary);
+      const parentPath = subpath.includes("/") ? subpath.substring(0, subpath.lastIndexOf("/")) : "";
+      if (parentPath) {
+        navigate(`/library/${encodeURIComponent(library.name)}/${parentPath.split("/").map(encodeURIComponent).join("/")}`);
+      } else {
+        navigate(`/library/${encodeURIComponent(library.name)}`);
+      }
     }
+  });
+
+  // Search
+  const searchInput = document.getElementById("search-input");
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      state.searchQuery = e.target.value.toLowerCase();
+      filterMediaGrid(library);
+    });
   }
 
-  function renderFolderCard(library, folder, index) {
-    return `
+  // Click handlers for folders
+  document.querySelectorAll("[data-folder]").forEach((item) => {
+    item.addEventListener("click", () => {
+      const folderPath = item.dataset.folder;
+      navigate(`/library/${encodeURIComponent(library.name)}/${folderPath.split("/").map(encodeURIComponent).join("/")}`);
+    });
+  });
+
+  // Click handlers for media items
+  if (!isAudio) {
+    attachMediaClickHandlers(viewLibrary);
+  } else {
+    attachAudioClickHandlers(viewLibrary);
+  }
+}
+
+function renderFolderCard(library, folder, index) {
+  return `
       <div class="media-item cursor-pointer transition-all duration-300 hover:-translate-y-1" data-folder="${escapeHtml(folder.path)}" data-name="${escapeHtml(folder.name.toLowerCase())}" id="folder-card-${index}">
         <div class="media-item__thumb flex flex-col items-center justify-center p-4 relative" style="background: rgba(139, 92, 246, 0.05); border-bottom: 1px solid var(--glass-border);">
           <div class="w-16 h-16 rounded-2xl flex items-center justify-center mb-2 icon-box transition-transform duration-300 transform hover:scale-110" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">
@@ -358,17 +359,17 @@
         </div>
       </div>
     `;
-  }
+}
 
-  function renderMediaItem(library, file, index) {
-    const isImage = file.type === "image";
-    const isVideo = file.type === "video";
-    const thumbUrl = (isImage || isVideo) ? api.thumbnailUrl(library.name, file.relativePath, 500) : "";
+function renderMediaItem(library, file, index) {
+  const isImage = file.type === "image";
+  const isVideo = file.type === "video";
+  const thumbUrl = (isImage || isVideo) ? api.thumbnailUrl(library.name, file.relativePath, 500) : "";
 
-    const nameNoExt = file.name.replace(/\.[^.]+$/, "");
-    const ext = getFileExtension(file.name);
+  const nameNoExt = file.name.replace(/\.[^.]+$/, "");
+  const ext = getFileExtension(file.name);
 
-    return `
+  return `
       <div class="media-item" data-index="${index}" data-name="${escapeHtml(file.name.toLowerCase())}" id="media-item-${index}">
         ${isImage || isVideo ? `
           <img 
@@ -405,14 +406,14 @@
         </div>
       </div>
     `;
-  }
+}
 
-  function renderAudioList(library) {
-    return `
+function renderAudioList(library) {
+  return `
       <div class="flex flex-col gap-3 max-w-2xl mx-auto">
         ${library.files.map((f, i) => {
-          const nameNoExt = f.name.replace(/\.[^.]+$/, "");
-          return `
+    const nameNoExt = f.name.replace(/\.[^.]+$/, "");
+    return `
             <div class="audio-item" data-index="${i}" data-name="${escapeHtml(f.name.toLowerCase())}" id="audio-item-${i}">
               <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background: rgba(139, 92, 246, 0.1); color: rgba(139, 92, 246, 0.8);">
                 ${ICONS.music}
@@ -426,7 +427,7 @@
               </div>
             </div>
           `;
-        }).join("")}
+  }).join("")}
       </div>
 
       <!-- Audio Player Bar -->
@@ -442,36 +443,36 @@
         </div>
       </div>
     `;
-  }
+}
 
-  function filterMediaGrid(library) {
-    const q = state.searchQuery;
-    const items = document.querySelectorAll("[data-name]");
-    items.forEach((item) => {
-      const name = item.dataset.name;
-      item.style.display = !q || name.includes(q) ? "" : "none";
+function filterMediaGrid(library) {
+  const q = state.searchQuery;
+  const items = document.querySelectorAll("[data-name]");
+  items.forEach((item) => {
+    const name = item.dataset.name;
+    item.style.display = !q || name.includes(q) ? "" : "none";
+  });
+}
+
+// -----------------------------------------------------------------------
+// Click handlers — open media viewer
+// -----------------------------------------------------------------------
+function attachMediaClickHandlers(library) {
+  document.querySelectorAll(".media-item").forEach((item) => {
+    item.addEventListener("click", () => {
+      const index = parseInt(item.dataset.index, 10);
+      openMediaViewer(library, index);
     });
-  }
+  });
+}
 
-  // -----------------------------------------------------------------------
-  // Click handlers — open media viewer
-  // -----------------------------------------------------------------------
-  function attachMediaClickHandlers(library) {
-    document.querySelectorAll(".media-item").forEach((item) => {
-      item.addEventListener("click", () => {
-        const index = parseInt(item.dataset.index, 10);
-        openMediaViewer(library, index);
-      });
+function attachAudioClickHandlers(library) {
+  document.querySelectorAll(".audio-item").forEach((item) => {
+    item.addEventListener("click", () => {
+      const index = parseInt(item.dataset.index, 10);
+      playAudio(library, index);
     });
-  }
+  });
+}
 
-  function attachAudioClickHandlers(library) {
-    document.querySelectorAll(".audio-item").forEach((item) => {
-      item.addEventListener("click", () => {
-        const index = parseInt(item.dataset.index, 10);
-        playAudio(library, index);
-      });
-    });
-  }
-
-  // -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
