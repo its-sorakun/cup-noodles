@@ -42,11 +42,13 @@ function startTranscodeProcess(sessionId, sessionDir, filePath, playlistPath, qu
   
   const ffmpegArgs = [
     "-y",
+    "-hwaccel", "cuda",
+    "-hwaccel_device", "0",
     ...(startTime > 0 ? ["-ss", String(startTime)] : []),
     "-i", filePath,
-    "-c:v", "libx264",
-    "-preset", "veryfast",
-    "-tune", "zerolatency",
+    "-c:v", "h264_nvenc",
+    "-preset", "p4",
+    "-tune", "ll",
     "-vf", `scale=${targetW}:${targetH}:force_original_aspect_ratio=decrease,pad=${targetW}:${targetH}:(ow-iw)/2:(oh-ih)/2`,
     "-b:v", preset.videoBitrate,
     "-maxrate", preset.videoBitrate,
