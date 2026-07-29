@@ -6,7 +6,7 @@ async function renderLogin() {
       <div class="weeb-login-wrapper fade-in flex-col gap-8 sm:gap-12">
         
         <!-- Centered Logo (Flow Layout) -->
-        <div class="flex justify-center items-center gap-4 w-full -mt-20 sm:-mt-24 mb-6 sm:mb-8">
+        <div class="flex justify-center items-center gap-4 w-full -mt-28 sm:-mt-36 mb-8 sm:mb-12">
           <span class="text-4xl sm:text-5xl" style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Segoe UI Symbol', 'Android Emoji', 'EmojiSymbols';">🍜</span>
           <span class="text-3xl sm:text-4xl font-extrabold tracking-tight" style="color: var(--text-primary);">
             Cup Noodles
