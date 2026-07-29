@@ -1,5 +1,22 @@
   // Media Viewer (Lightbox / Video Player with HLS transcoding)
   // -----------------------------------------------------------------------
+  
+  if (!document.getElementById("custom-player-styles")) {
+    const style = document.createElement("style");
+    style.id = "custom-player-styles";
+    style.innerHTML = `
+      @keyframes spin-local { 100% { transform: rotate(360deg); } }
+      .spin-anim { animation: spin-local 1s linear infinite; }
+      
+      .player-fullscreen-container { position: relative; width: 100%; max-width: 92vw; border-radius: var(--radius-md); overflow: hidden; box-shadow: 0 25px 100px -20px rgba(0,0,0,0.8); background: black; }
+      .player-fullscreen-container:fullscreen { max-width: none !important; width: 100% !important; height: 100% !important; border-radius: 0; display: flex; align-items: center; justify-content: center; }
+      .player-fullscreen-container:-webkit-full-screen { max-width: none !important; width: 100% !important; height: 100% !important; border-radius: 0; display: flex; align-items: center; justify-content: center; }
+      .player-fullscreen-container:fullscreen video { max-height: none !important; width: 100% !important; height: 100% !important; object-fit: contain; }
+      .player-fullscreen-container:-webkit-full-screen video { max-height: none !important; width: 100% !important; height: 100% !important; object-fit: contain; }
+    `;
+    document.head.appendChild(style);
+  }
+
   let currentViewerIndex = 0;
   let currentViewerLibrary = null;
   let currentTranscodeSessionId = null;
@@ -17,7 +34,15 @@
   async function startTranscodeAndPlay(library, file, quality, explicitStartTime = null) {
     const videoEl = document.getElementById("viewer-video");
     const statusEl = document.getElementById("transcode-status");
+    const loadingOverlay = document.getElementById("video-loading-overlay");
+    const loadingText = document.getElementById("video-loading-text");
     if (!videoEl) return;
+
+    function setStatus(msg, showLoading = true) {
+      if (statusEl) statusEl.textContent = msg;
+      if (loadingText) loadingText.textContent = msg;
+      if (loadingOverlay) loadingOverlay.style.display = showLoading ? "flex" : "none";
+    }
 
     currentQuality = quality;
 
@@ -37,7 +62,7 @@
 
     if (quality === "direct") {
       // Direct stream — no transcoding
-      if (statusEl) statusEl.textContent = "Direct stream";
+      setStatus("Direct stream", true);
       videoEl.src = api.streamUrl(library.name, file.relativePath);
       videoEl.load();
       // Restore timestamp once metadata is loaded
@@ -53,7 +78,7 @@
 
     currentStreamBaseTime = actualTime;
 
-    if (statusEl) statusEl.textContent = `Starting ${quality} transcode...`;
+    setStatus(`Starting ${quality} transcode...`, true);
     videoEl.src = "";
 
     try {
@@ -75,7 +100,7 @@
 
       const playlistUrl = `/api/transcode/${sessionId}/playlist.m3u8`;
 
-      if (statusEl) statusEl.textContent = `Buffering ${quality} — building initial buffer...`;
+      setStatus(`Buffering ${quality}...`, true);
 
       if (Hls.isSupported()) {
         // Android Chrome, Firefox, etc. — need hls.js
@@ -161,19 +186,31 @@
         ${isImage ? `
           <img src="${url}" alt="${escapeHtml(file.name)}" style="max-width: 92vw; max-height: 82vh; border-radius: var(--radius-md); box-shadow: 0 25px 100px -20px rgba(0,0,0,0.8);">
         ` : isVideo ? `
-          <div style="position:relative; max-width: 92vw; width: 100%;">
-            <video id="viewer-video" style="max-width: 92vw; max-height: 75vh; border-radius: var(--radius-md); box-shadow: 0 25px 100px -20px rgba(0,0,0,0.8); display:block; width:100%;"></video>
+          <div style="max-width: 92vw; width: 100%; display:flex; flex-direction:column; align-items:center;">
             
-            <div id="video-controls" style="display:flex; align-items:center; gap:12px; margin-top:12px; padding:8px 16px; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border-radius: var(--radius-md); width:100%; border: 1px solid rgba(255, 255, 255, 0.1);">
-              <button id="play-pause-btn" class="hover:scale-110 transition-all text-white" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">${ICONS.playSmall}</button>
-              <span id="time-display" style="color:white; font-size:12px; font-family:monospace; min-width:85px; text-align:center;">0:00 / 0:00</span>
-              <input type="range" id="seek-bar" value="0" step="1" style="flex:1; cursor:pointer;">
-              <button id="fullscreen-btn" class="hover:scale-110 transition-all text-white" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">${ICONS.maximize}</button>
+            <div id="video-player-container" class="player-fullscreen-container">
+              <video id="viewer-video" style="max-height: 75vh; display:block; width:100%; outline:none;"></video>
+              
+              <div id="video-loading-overlay" style="position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.4); z-index:10; pointer-events:none;">
+                 <div style="display:flex; flex-direction:column; align-items:center; gap:12px; padding: 25px 35px; background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05)); border: 1px solid rgba(255,255,255,0.25); border-radius: 16px; backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+                    <svg class="spin-anim" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                    <span id="video-loading-text" style="color:white; font-size:15px; font-weight:600; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">Buffering...</span>
+                 </div>
+              </div>
+              
+              <div id="video-controls-wrapper" style="position:absolute; bottom:0; left:0; width:100%; padding: 40px 20px 20px 20px; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); display:flex; flex-direction:column; justify-content:flex-end; z-index:20;">
+                <div id="video-controls" style="display:flex; align-items:center; gap:14px; padding:10px 20px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05)); border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); box-shadow: 0 10px 40px rgba(0,0,0,0.4); width:100%;">
+                  <button id="play-pause-btn" class="hover:scale-110 transition-all text-white" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">${ICONS.playSmall}</button>
+                  <span id="time-display" style="color:white; font-size:13px; font-weight:600; font-family:monospace; min-width:90px; text-align:center; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">0:00 / 0:00</span>
+                  <input type="range" id="seek-bar" value="0" step="1" style="flex:1; cursor:pointer;">
+                  <button id="fullscreen-btn" class="hover:scale-110 transition-all text-white" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">${ICONS.maximize}</button>
+                </div>
+              </div>
             </div>
 
-            <div style="margin-top: 10px; display:flex; flex-wrap:wrap; align-items:center; gap:8px; justify-content:center;">
-              <span id="transcode-status" style="font-size:11px; color: var(--text-tertiary); font-family: monospace;">Select quality to start</span>
-              <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;">
+            <div style="margin-top: 15px; display:flex; flex-wrap:wrap; align-items:center; gap:10px; justify-content:center;">
+              <span id="transcode-status" style="font-size:12px; color: var(--text-tertiary); font-family: monospace;">Select quality to start</span>
+              <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
                 ${["1080p","720p","480p","360p"].map(q => `
                   <button class="pill pill--blue transcode-quality-btn" data-quality="${q}" style="cursor:pointer; font-size:11px; padding:3px 10px;">${q}</button>
                 `).join("")}
@@ -226,6 +263,20 @@
 
       videoEl.addEventListener("play", () => playBtn.innerHTML = ICONS.pause);
       videoEl.addEventListener("pause", () => playBtn.innerHTML = ICONS.playSmall);
+      
+      videoEl.addEventListener("playing", () => {
+        const loadingOverlay = document.getElementById("video-loading-overlay");
+        if (loadingOverlay) loadingOverlay.style.display = "none";
+      });
+
+      videoEl.addEventListener("waiting", () => {
+        const loadingOverlay = document.getElementById("video-loading-overlay");
+        const loadingText = document.getElementById("video-loading-text");
+        if (loadingOverlay) {
+          if (loadingText) loadingText.textContent = "Buffering...";
+          loadingOverlay.style.display = "flex";
+        }
+      });
       
       videoEl.addEventListener("loadedmetadata", () => {
         if (currentQuality === "direct") {
