@@ -2,6 +2,7 @@ const express = require("express");
 const path = require("path");
 const fsPromises = require("node:fs/promises");
 const os = require("node:os");
+const { execSync } = require("child_process");
 const { loadConfig } = require("../mediascanner");
 const { transcodeSessions, killSession, startTranscodeProcess } = require("../services/transcoder");
 
@@ -39,10 +40,19 @@ router.post("/session", async (req, res) => {
 
     const playlistPath = path.join(sessionDir, "playlist.m3u8");
     
+    // Extract total duration
+    let duration = 0;
+    try {
+      const durationStr = execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filePath}"`, { encoding: 'utf-8' });
+      duration = parseFloat(durationStr.trim()) || 0;
+    } catch (e) {
+      console.error("[transcode] Failed to get duration:", e.message);
+    }
+
     // Start FFmpeg via service
     const { preset } = startTranscodeProcess(sessionId, sessionDir, filePath, playlistPath, quality, startTime);
 
-    res.json({ sessionId, quality, preset });
+    res.json({ sessionId, quality, preset, duration });
   } catch (err) {
     res.status(500).json({ error: "Failed to start transcoding session", details: err.message });
   }

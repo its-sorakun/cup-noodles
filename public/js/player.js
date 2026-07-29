@@ -4,6 +4,9 @@
   let currentViewerLibrary = null;
   let currentTranscodeSessionId = null;
   let currentHlsInstance = null;
+  let currentStreamBaseTime = 0;
+  let totalDuration = 0;
+  let currentQuality = "direct";
 
   function openMediaViewer(library, index) {
     currentViewerLibrary = library;
@@ -11,13 +14,16 @@
     renderViewer();
   }
 
-  async function startTranscodeAndPlay(library, file, quality) {
+  async function startTranscodeAndPlay(library, file, quality, explicitStartTime = null) {
     const videoEl = document.getElementById("viewer-video");
     const statusEl = document.getElementById("transcode-status");
     if (!videoEl) return;
 
-    // Capture current playback position before switching
-    const savedTime = videoEl.currentTime || 0;
+    currentQuality = quality;
+
+    // Capture absolute playback position across quality switches
+    const playheadTime = videoEl.currentTime || 0;
+    const actualTime = explicitStartTime !== null ? explicitStartTime : (currentStreamBaseTime + playheadTime);
 
     // Kill any existing session
     if (currentTranscodeSessionId) {
@@ -35,14 +41,17 @@
       videoEl.src = api.streamUrl(library.name, file.relativePath);
       videoEl.load();
       // Restore timestamp once metadata is loaded
-      if (savedTime > 0) {
+      currentStreamBaseTime = 0; // Direct stream time is always absolute
+      if (actualTime > 0) {
         videoEl.addEventListener("loadedmetadata", () => {
-          videoEl.currentTime = savedTime;
+          videoEl.currentTime = actualTime;
         }, { once: true });
       }
       videoEl.play().catch(() => {});
       return;
     }
+
+    currentStreamBaseTime = actualTime;
 
     if (statusEl) statusEl.textContent = `Starting ${quality} transcode...`;
     videoEl.src = "";
@@ -51,15 +60,18 @@
       const res = await fetch("/api/transcode/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ libraryName: library.name, relativePath: file.relativePath, quality, startTime: savedTime }),
+        body: JSON.stringify({ libraryName: library.name, relativePath: file.relativePath, quality, startTime: actualTime }),
       });
 
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
         throw new Error(errBody.details || errBody.error || "Failed to start transcode session");
       }
-      const { sessionId } = await res.json();
+      const { sessionId, duration } = await res.json();
       currentTranscodeSessionId = sessionId;
+      if (duration && duration > 0) {
+        totalDuration = duration;
+      }
 
       const playlistUrl = `/api/transcode/${sessionId}/playlist.m3u8`;
 
@@ -128,6 +140,7 @@
 
     // Remove existing overlay if any
     closeViewer(false); // false = don’t kill session (we'll restart fresh)
+    currentStreamBaseTime = 0;
 
     const overlay = document.createElement("div");
     overlay.className = "player-overlay";
@@ -148,8 +161,16 @@
         ${isImage ? `
           <img src="${url}" alt="${escapeHtml(file.name)}" style="max-width: 92vw; max-height: 82vh; border-radius: var(--radius-md); box-shadow: 0 25px 100px -20px rgba(0,0,0,0.8);">
         ` : isVideo ? `
-          <div style="position:relative; max-width: 92vw;">
-            <video id="viewer-video" controls style="max-width: 92vw; max-height: 75vh; border-radius: var(--radius-md); box-shadow: 0 25px 100px -20px rgba(0,0,0,0.8); display:block;"></video>
+          <div style="position:relative; max-width: 92vw; width: 100%;">
+            <video id="viewer-video" style="max-width: 92vw; max-height: 75vh; border-radius: var(--radius-md); box-shadow: 0 25px 100px -20px rgba(0,0,0,0.8); display:block; width:100%;"></video>
+            
+            <div id="video-controls" style="display:flex; align-items:center; gap:12px; margin-top:12px; padding:8px 16px; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border-radius: var(--radius-md); width:100%; border: 1px solid rgba(255, 255, 255, 0.1);">
+              <button id="play-pause-btn" class="hover:scale-110 transition-all text-white" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">${ICONS.playSmall}</button>
+              <span id="time-display" style="color:white; font-size:12px; font-family:monospace; min-width:85px; text-align:center;">0:00 / 0:00</span>
+              <input type="range" id="seek-bar" value="0" step="1" style="flex:1; cursor:pointer;">
+              <button id="fullscreen-btn" class="hover:scale-110 transition-all text-white" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">${ICONS.maximize}</button>
+            </div>
+
             <div style="margin-top: 10px; display:flex; flex-wrap:wrap; align-items:center; gap:8px; justify-content:center;">
               <span id="transcode-status" style="font-size:11px; color: var(--text-tertiary); font-family: monospace;">Select quality to start</span>
               <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;">
@@ -189,6 +210,66 @@
           startTranscodeAndPlay(library, file, btn.dataset.quality);
         });
       });
+
+      // Custom Controls Logic
+      const videoEl = document.getElementById("viewer-video");
+      const playBtn = document.getElementById("play-pause-btn");
+      const timeDisp = document.getElementById("time-display");
+      const seekBar = document.getElementById("seek-bar");
+      const fsBtn = document.getElementById("fullscreen-btn");
+
+      playBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (videoEl.paused) videoEl.play();
+        else videoEl.pause();
+      });
+
+      videoEl.addEventListener("play", () => playBtn.innerHTML = ICONS.pause);
+      videoEl.addEventListener("pause", () => playBtn.innerHTML = ICONS.playSmall);
+      
+      videoEl.addEventListener("loadedmetadata", () => {
+        if (currentQuality === "direct") {
+          totalDuration = videoEl.duration;
+        }
+      });
+
+      videoEl.addEventListener("timeupdate", () => {
+        if (isNaN(totalDuration) || totalDuration <= 0) return;
+        const globalTime = currentStreamBaseTime + (videoEl.currentTime || 0);
+        timeDisp.textContent = formatTime(globalTime) + " / " + formatTime(totalDuration);
+        seekBar.max = totalDuration;
+        seekBar.value = globalTime;
+      });
+
+      seekBar.addEventListener("input", (e) => {
+        e.stopPropagation();
+        const newTime = parseFloat(e.target.value);
+        timeDisp.textContent = formatTime(newTime) + " / " + formatTime(totalDuration);
+      });
+
+      seekBar.addEventListener("change", (e) => {
+        e.stopPropagation();
+        const newTime = parseFloat(e.target.value);
+        if (currentQuality === "direct") {
+          videoEl.currentTime = newTime;
+        } else {
+          const relativeTime = newTime - currentStreamBaseTime;
+          // Check if the seek target is safely within the currently buffered HLS chunk
+          if (relativeTime >= 0 && relativeTime <= (videoEl.duration || 0) - 2) {
+            videoEl.currentTime = relativeTime;
+          } else {
+            // Seek outside buffer! Destroy current session and spawn a new one exactly at newTime
+            startTranscodeAndPlay(library, file, currentQuality, newTime);
+          }
+        }
+      });
+
+      fsBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (videoEl.requestFullscreen) videoEl.requestFullscreen();
+        else if (videoEl.webkitRequestFullscreen) videoEl.webkitRequestFullscreen();
+      });
+
       // Auto-start at 720p by default
       setTimeout(() => {
         const btn720 = overlay.querySelector('[data-quality="720p"]');
