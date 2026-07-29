@@ -1,20 +1,24 @@
 <div align="center">
 
-# 🍜 Cup Noodles
+# 🍜 Cup Noodles (カップヌードル)
 
 ### Your personal digital vault, served warm and effortless.
 
 *A self-hosted entertainment sanctuary crafted to showcase and enjoy your movies, anime catalogs, audio collections, and high-resolution wallpaper archives.*
+<br/>
 
-<br />
-<p align="center">
-  <img src="https://imgh.in/host/plz44n" alt="Cup Noodles Homepage">
-</p>
+<div align="center">
+  <img src="https://imgh.in/host/xwxppp" alt="Cup Noodles Lockscreen" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+  <br /><br />
+  <img src="https://imgh.in/host/vopdpu" alt="Cup Noodles Homepage" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+</div>
 </div>
 
 ## 🌌 Why Cup Noodles?
 
-Your digital collection shouldn't stay buried inside cluttered system folders. **Cup Noodles** transforms your personal libraries into an immersive, private sanctuary built around instant access, seamless organization, and pure visual pleasure. Whether you are curating vast anime seasons, admiring high-resolution digital artwork, or relaxing with an evening film, your entire universe of comfort media is always just one click away.
+Your digital collection shouldn't stay buried inside cluttered system folders. **Cup Noodles** transforms your personal libraries into an immersive, private sanctuary built around instant access, seamless organization, and pure visual aesthetic. 
+
+Whether you are curating vast anime seasons, admiring high-resolution digital artwork, or relaxing with an evening film, your entire universe of comfort media is always just one click away. Welcome home. *(Okaeri, Senpai!)*
 
 ---
 
@@ -76,7 +80,7 @@ ffmpeg -version
 node server.js
 ```
 
-Once boiling, open your favorite web browser and dig in at **`http://localhost:1337`**!
+Once boiling, open your favorite web browser and dig in at **`http://localhost:1337`**! *(By default, you will be met with the Vault Lockscreen)*
 
 ---
 
@@ -102,7 +106,7 @@ Cup Noodles uses **server-side transcoding** powered by FFmpeg to let you stream
 When you open a video, simply pick your desired quality from the player controls:
 
 | Quality | Resolution | Best For |
-|---------|-----------|----------|
+|:---:|:---:|---|
 | `1080p` | 1920 × 1080 | Big screen, fast network |
 | `720p` | 1280 × 720 | Phone streaming *(default)* |
 | `480p` | 854 × 480 | Slower connections |
@@ -121,6 +125,7 @@ When you open a video, simply pick your desired quality from the player controls
 
 <div align="center">
 
-*Crafted for late-night binging, curated aesthetics, and personal media enthusiasts.* 🥢
+*Crafted for late-night binging, curated aesthetics, and personal media enthusiasts.* 🥢<br>
+**Enjoy your digital sanctuary.**
 
 </div>
