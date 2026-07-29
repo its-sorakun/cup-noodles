@@ -13,6 +13,86 @@
       .player-fullscreen-container:-webkit-full-screen { max-width: none !important; width: 100% !important; height: 100% !important; border-radius: 0; display: flex; align-items: center; justify-content: center; }
       .player-fullscreen-container:fullscreen video { max-height: none !important; width: 100% !important; height: 100% !important; object-fit: contain; }
       .player-fullscreen-container:-webkit-full-screen video { max-height: none !important; width: 100% !important; height: 100% !important; object-fit: contain; }
+      
+      .player-fullscreen-container { cursor: default; }
+      .player-fullscreen-container.hide-controls { cursor: none; }
+      .player-fullscreen-container.hide-controls #video-controls-wrapper { opacity: 0; pointer-events: none; }
+      .player-fullscreen-container.hide-controls #quality-popup { opacity: 0; pointer-events: none; }
+      #video-controls-wrapper { opacity: 1; transition: opacity 0.4s ease; }
+      
+      #seek-bar {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 2px;
+        outline: none;
+        transition: height 0.2s, transform 0.2s;
+        margin-bottom: 8px;
+        cursor: pointer;
+      }
+      #seek-bar:hover { height: 6px; }
+      #seek-bar::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        transition: transform 0.2s;
+        box-shadow: 0 0 5px rgba(0,0,0,0.5);
+      }
+      #seek-bar:hover::-webkit-slider-thumb { transform: scale(1.2); }
+      
+      #quality-popup {
+        position: absolute;
+        bottom: 75px;
+        right: 20px;
+        background: rgba(20, 20, 20, 0.85);
+        backdrop-filter: blur(25px);
+        -webkit-backdrop-filter: blur(25px);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 12px;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        transform: translateY(10px);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        z-index: 30;
+      }
+      #quality-popup.show {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+      }
+      .quality-option {
+        background: transparent;
+        border: none;
+        color: rgba(255,255,255,0.7);
+        padding: 6px 16px;
+        font-size: 13px;
+        border-radius: 6px;
+        cursor: pointer;
+        text-align: left;
+        transition: background 0.2s, color 0.2s;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .quality-option:hover {
+        background: rgba(255,255,255,0.1);
+        color: white;
+      }
+      .quality-option.active {
+        color: white;
+        background: rgba(255,255,255,0.15);
+      }
     `;
     document.head.appendChild(style);
   }
@@ -197,24 +277,27 @@
                     <span id="video-loading-text" style="color:white; font-size:15px; font-weight:600; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">Buffering...</span>
                  </div>
               </div>
-              
-              <div id="video-controls-wrapper" style="position:absolute; bottom:0; left:0; width:100%; padding: 40px 20px 20px 20px; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); display:flex; flex-direction:column; justify-content:flex-end; z-index:20;">
-                <div id="video-controls" style="display:flex; align-items:center; gap:14px; padding:10px 20px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05)); border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); box-shadow: 0 10px 40px rgba(0,0,0,0.4); width:100%;">
-                  <button id="play-pause-btn" class="hover:scale-110 transition-all text-white" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">${ICONS.playSmall}</button>
-                  <span id="time-display" style="color:white; font-size:13px; font-weight:600; font-family:monospace; min-width:90px; text-align:center; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">0:00 / 0:00</span>
-                  <input type="range" id="seek-bar" value="0" step="1" style="flex:1; cursor:pointer;">
-                  <button id="fullscreen-btn" class="hover:scale-110 transition-all text-white" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">${ICONS.maximize}</button>
-                </div>
-              </div>
-            </div>
 
-            <div style="margin-top: 15px; display:flex; flex-wrap:wrap; align-items:center; gap:10px; justify-content:center;">
-              <span id="transcode-status" style="font-size:12px; color: var(--text-tertiary); font-family: monospace;">Select quality to start</span>
-              <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
+              <div id="quality-popup">
+                <span id="transcode-status" style="font-size:11px; color:rgba(255,255,255,0.5); font-family:monospace; margin-bottom:4px; text-align:center;">Select quality</span>
                 ${["1080p","720p","480p","360p"].map(q => `
-                  <button class="pill pill--blue transcode-quality-btn" data-quality="${q}" style="cursor:pointer; font-size:11px; padding:3px 10px;">${q}</button>
+                  <button class="quality-option transcode-quality-btn" data-quality="${q}"><span>${q}</span></button>
                 `).join("")}
-                <button class="pill transcode-quality-btn" data-quality="direct" style="cursor:pointer; font-size:11px; padding:3px 10px;" title="Direct stream — no transcoding, browser decodes">⚡ Direct</button>
+                <button class="quality-option transcode-quality-btn" data-quality="direct" title="Direct stream — no transcoding, browser decodes"><span>Direct</span> <span style="font-size:10px; opacity:0.6;">⚡</span></button>
+              </div>
+              
+              <div id="video-controls-wrapper" style="position:absolute; bottom:0; left:0; width:100%; padding: 40px 0 0 0; background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.4) 50%, transparent); display:flex; flex-direction:column; justify-content:flex-end; z-index:20;">
+                <input type="range" id="seek-bar" value="0" step="1">
+                <div style="display:flex; align-items:center; justify-content:space-between; padding: 0 20px 20px 20px; width:100%;">
+                  <div style="display:flex; align-items:center; gap:16px;">
+                    <button id="play-pause-btn" class="hover:scale-110 transition-all text-white" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">${ICONS.playSmall}</button>
+                    <span id="time-display" style="color:white; font-size:13px; font-weight:600; font-family:monospace; min-width:90px; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">0:00 / 0:00</span>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:16px;">
+                    <button id="settings-btn" class="hover:scale-110 transition-all text-white" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">${ICONS.settings}</button>
+                    <button id="fullscreen-btn" class="hover:scale-110 transition-all text-white" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">${ICONS.maximize}</button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -238,12 +321,13 @@
 
     // Quality selector buttons
     if (isVideo) {
+      const popup = document.getElementById("quality-popup");
       overlay.querySelectorAll(".transcode-quality-btn").forEach(btn => {
         btn.addEventListener("click", (e) => {
           e.stopPropagation();
-          // Highlight selected
-          overlay.querySelectorAll(".transcode-quality-btn").forEach(b => b.style.opacity = "0.5");
-          btn.style.opacity = "1";
+          overlay.querySelectorAll(".transcode-quality-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          if (popup) popup.classList.remove("show");
           startTranscodeAndPlay(library, file, btn.dataset.quality);
         });
       });
@@ -254,6 +338,33 @@
       const timeDisp = document.getElementById("time-display");
       const seekBar = document.getElementById("seek-bar");
       const fsBtn = document.getElementById("fullscreen-btn");
+      const settingsBtn = document.getElementById("settings-btn");
+      const playerContainer = document.getElementById("video-player-container");
+
+      // Auto-hide controls
+      let hideTimeout = null;
+      function showControls() {
+        if (playerContainer) playerContainer.classList.remove("hide-controls");
+        clearTimeout(hideTimeout);
+        hideTimeout = setTimeout(() => {
+          if (!videoEl.paused) playerContainer.classList.add("hide-controls");
+        }, 2500);
+      }
+      if (playerContainer) {
+        playerContainer.addEventListener("mousemove", showControls);
+        playerContainer.addEventListener("mouseleave", () => {
+          if (!videoEl.paused) playerContainer.classList.add("hide-controls");
+        });
+        videoEl.addEventListener("play", showControls);
+      }
+
+      // Settings popup toggle
+      if (settingsBtn && popup) {
+        settingsBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          popup.classList.toggle("show");
+        });
+      }
 
       playBtn.addEventListener("click", (e) => {
         e.stopPropagation();

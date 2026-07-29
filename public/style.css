@@ -543,8 +543,9 @@ body {
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(15px);
+  background: rgba(10, 10, 15, 0.4);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
   display: flex;
   align-items: center;
   justify-content: center;
