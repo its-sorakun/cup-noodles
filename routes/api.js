@@ -7,12 +7,23 @@ const crypto = require("node:crypto");
 const { spawn } = require("node:child_process");
 const { scanAll, scanByName, loadConfig } = require("../mediascanner");
 
+function getAppRoot() {
+  const cwd = process.cwd();
+  if (cwd.includes("target\\debug") || cwd.includes("target/debug")) {
+    return path.join(cwd, "..", "..", "..");
+  }
+  if (cwd.endsWith("src-tauri")) {
+    return path.join(cwd, "..");
+  }
+  return cwd;
+}
+
 const router = express.Router();
 
 // ---------------------------------------------------------------------------
 // Thumbnail Caching & Concurrency Queue
 // ---------------------------------------------------------------------------
-const THUMB_CACHE_DIR = path.join(__dirname, "..", ".thumbnails");
+const THUMB_CACHE_DIR = path.join(getAppRoot(), ".thumbnails");
 if (!fs.existsSync(THUMB_CACHE_DIR)) {
   fs.mkdirSync(THUMB_CACHE_DIR, { recursive: true });
 }
@@ -51,8 +62,10 @@ router.get("/ping", (req, res) => {
 // Get current config (libraries list without scanning files)
 router.get("/config", async (req, res) => {
   try {
-    const config = await loadConfig();
-    const libraries = config.libraries.map((lib) => ({
+    const configPath = path.join(getAppRoot(), "config.json");
+    const raw = await fsPromises.readFile(configPath, "utf-8");
+    const config = JSON.parse(raw);
+    const libraries = (config.libraries || []).map((lib) => ({
       name: lib.name,
       type: lib.type,
       icon: lib.icon,
@@ -98,7 +111,7 @@ router.post("/config/library", async (req, res) => {
       return res.status(400).json({ error: "Library name is required" });
     }
 
-    const configPath = path.join(__dirname, "..", "config.json");
+    const configPath = path.join(getAppRoot(), "config.json");
     const config = await loadConfig();
 
     const existing = config.libraries.find(
@@ -242,7 +255,7 @@ router.get("/thumbnail/:libraryName/{*filePath}", async (req, res) => {
 
     if (isImage) {
       try {
-        const sharp = require("sharp");
+        const sharp = require(path.join(getAppRoot(), "node_modules", "sharp"));
         const thumbnail = await sharp(resolved)
           .resize(width, null, { fit: "inside", withoutEnlargement: true })
           .jpeg({ quality: 80 })
@@ -257,7 +270,8 @@ router.get("/thumbnail/:libraryName/{*filePath}", async (req, res) => {
           "Cache-Control": "public, max-age=86400",
         });
         res.end(thumbnail);
-      } catch {
+      } catch (err) {
+        console.error("[api] Thumbnail error (image):", err.message);
         const stream = fs.createReadStream(resolved);
         res.setHeader("Content-Type", mimeType);
         res.setHeader("Cache-Control", "public, max-age=86400");
@@ -275,7 +289,10 @@ router.get("/thumbnail/:libraryName/{*filePath}", async (req, res) => {
           "-q:v", "2",
           cachePath
         ];
-        const ffmpeg = spawn("ffmpeg", args);
+        
+        const { getBinPath } = require('../services/binpaths');
+        const ffmpegPath = getBinPath('ffmpeg');
+        const ffmpeg = spawn(ffmpegPath, args);
         ffmpeg.on("close", (code) => {
           if (code === 0) {
             thumbnailMap.set(cacheKey, true);

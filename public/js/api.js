@@ -1,5 +1,8 @@
   // API Client
   // -----------------------------------------------------------------------
+  const isWebProxy = window.location.port === '1337' || (!window.location.hostname.includes('localhost') && !window.location.hostname.startsWith('127.'));
+  const API_BASE = isWebProxy ? "" : "http://localhost:1337";
+
   async function authFetch(url, options = {}) {
     const token = localStorage.getItem("jwt_token");
     if (token) {
@@ -8,7 +11,7 @@
         "Authorization": `Bearer ${token}`
       };
     }
-    const res = await fetch(url, options);
+    const res = await fetch(API_BASE + url, options);
     if (res.status === 401) {
       localStorage.removeItem("jwt_token");
       window.location.hash = "/login";
@@ -18,15 +21,45 @@
   }
 
   function appendToken(url) {
+    const fullUrl = API_BASE + url;
     const token = localStorage.getItem("jwt_token");
-    if (!token) return url;
-    return url.includes("?") ? `${url}&token=${token}` : `${url}?token=${token}`;
+    if (!token) return fullUrl;
+    return fullUrl.includes("?") ? `${fullUrl}&token=${token}` : `${fullUrl}?token=${token}`;
   }
 
   const api = {
+    API_BASE,
     authFetch,
+    async needsSetup() {
+      // Retry logic for sidecar boot race condition
+      for (let i = 0; i < 10; i++) {
+        try {
+          const res = await fetch(API_BASE + "/api/needs-setup");
+          if (res.ok) {
+            const data = await res.json();
+            return data.needsSetup;
+          }
+        } catch (e) {
+          // If connection refused, wait and retry
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+      return false;
+    },
+    async setup(username, password) {
+      const res = await fetch(API_BASE + "/api/setup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+      if (!res.ok) throw new Error("Setup failed");
+      const data = await res.json();
+      localStorage.setItem("jwt_token", data.token);
+      document.cookie = `jwt_token=${data.token}; path=/; max-age=2592000`; // 30 days
+      return data;
+    },
     async login(username, password) {
-      const res = await fetch("/api/login", {
+      const res = await fetch(API_BASE + "/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password })

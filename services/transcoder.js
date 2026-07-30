@@ -42,22 +42,18 @@ function startTranscodeProcess(sessionId, sessionDir, filePath, playlistPath, qu
   
   const ffmpegArgs = [
     "-y",
-    "-hwaccel", "cuda",
-    "-hwaccel_device", "0",
+    "-nostats",
+    "-loglevel", "warning",
     ...(startTime > 0 ? ["-ss", String(startTime)] : []),
     "-i", filePath,
     "-c:v", "h264_nvenc",
     "-preset", "p4",
-    "-tune", "ll",
-    "-vf", `scale=${targetW}:${targetH}:force_original_aspect_ratio=decrease,pad=${targetW}:${targetH}:(ow-iw)/2:(oh-ih)/2`,
     "-b:v", preset.videoBitrate,
-    "-maxrate", preset.videoBitrate,
-    "-bufsize", `${parseInt(preset.videoBitrate) * 2}k`,
     "-c:a", "aac",
     "-b:a", preset.audioBitrate,
-    "-ac", "2",
+    "-vf", `scale=${targetW}:${targetH}:force_original_aspect_ratio=decrease,scale=trunc(iw/2)*2:trunc(ih/2)*2`,
     "-f", "hls",
-    "-hls_time", "4",
+    "-hls_time", "6",
     "-hls_list_size", "0",
     "-hls_segment_type", "mpegts",
     "-hls_segment_filename", path.join(sessionDir, "seg%05d.ts"),
@@ -66,16 +62,18 @@ function startTranscodeProcess(sessionId, sessionDir, filePath, playlistPath, qu
 
   console.log(`[transcode] Starting session ${sessionId} — quality: ${quality}`);
   console.log(`[transcode] FFmpeg args: ffmpeg ${ffmpegArgs.join(" ")}`);
-  
-  const ffmpegProcess = spawn("ffmpeg", ffmpegArgs, {
+  const { getBinPath } = require('./binpaths');
+  const ffmpegPath = getBinPath('ffmpeg');
+  const ffmpegProcess = spawn(ffmpegPath, ffmpegArgs, {
     stdio: ["ignore", "ignore", "pipe"],
   });
 
   let stderrBuf = "";
   ffmpegProcess.stderr.on("data", (data) => {
     const text = data.toString();
-    stderrBuf += text;
-    process.stdout.write(`[ffmpeg ${sessionId}] ${text}`);
+    if (stderrBuf.length < 50000) {
+      stderrBuf += text;
+    }
   });
 
   ffmpegProcess.on("error", (err) => {
@@ -84,12 +82,12 @@ function startTranscodeProcess(sessionId, sessionDir, filePath, playlistPath, qu
     if (session) session.error = `FFmpeg not found: ${err.message}`;
   });
 
-  ffmpegProcess.on("exit", (code) => {
-    console.log(`[transcode] Session ${sessionId} FFmpeg exited with code ${code}`);
+  ffmpegProcess.on("close", (code) => {
+    console.log(`[transcode] FFmpeg session ${sessionId} closed with code ${code}`);
     const session = transcodeSessions.get(sessionId);
-    if (session && code !== 0) {
-      const lastLines = stderrBuf.trim().split("\n").slice(-5).join("\n");
-      session.error = `FFmpeg exited with code ${code}: ${lastLines}`;
+    if (code !== 0 && code !== null) {
+      if (session) session.error = stderrBuf || `FFmpeg exited with code ${code}`;
+      try { require('fs').writeFileSync(path.join(sessionDir, "error.log"), session.error); } catch(e){}
     }
   });
 

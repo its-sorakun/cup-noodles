@@ -29,6 +29,22 @@
     const route = getRoute();
     updateNavActiveState(route);
 
+    try {
+      const needsSetup = await api.needsSetup();
+      if (needsSetup && route !== "/setup") {
+        navigate("/setup");
+        return;
+      }
+    } catch (e) {
+      console.warn("Could not check setup state", e);
+    }
+
+    if (route === "/setup") {
+      document.getElementById("main-nav").style.display = "none";
+      await renderSetup();
+      return;
+    }
+
     if (route === "/login") {
       document.getElementById("main-nav").style.display = "none";
       await renderLogin();

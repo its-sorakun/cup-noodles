@@ -178,7 +178,7 @@
         totalDuration = duration;
       }
 
-      const playlistUrl = `/api/transcode/${sessionId}/playlist.m3u8`;
+      const playlistUrl = `${api.API_BASE}/api/transcode/${sessionId}/playlist.m3u8`;
 
       setStatus(`Buffering ${quality}...`, true);
 
@@ -213,17 +213,26 @@
           if (statusEl) statusEl.textContent = `Streaming ${quality}`;
           videoEl.play().catch(() => {});
         });
+        let networkErrorCount = 0;
         hls.on(Hls.Events.ERROR, (_, data) => {
           if (data.fatal) {
             if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-              // Try to recover from network errors
-              if (statusEl) statusEl.textContent = `Recovering from network error...`;
-              hls.startLoad();
+              networkErrorCount++;
+              if (networkErrorCount <= 3) {
+                // Try to recover from network errors a few times
+                if (statusEl) statusEl.textContent = `Recovering from network error (${networkErrorCount}/3)...`;
+                setTimeout(() => hls.startLoad(), 1000);
+              } else {
+                if (statusEl) statusEl.textContent = `Transcode failed: Network error limit reached.`;
+                hls.destroy();
+                closeViewer(true);
+              }
             } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
               if (statusEl) statusEl.textContent = `Recovering from media error...`;
               hls.recoverMediaError();
             } else {
-              if (statusEl) statusEl.textContent = `HLS Error: ${data.type} — ${data.details}`;
+              if (statusEl) statusEl.textContent = `HLS Fatal Error: ${data.details}`;
+              hls.destroy();
             }
           }
         });

@@ -4,8 +4,13 @@ node_modules
 # Local configuration & environment secrets
 config.json
 auth.json
+auth.json.backup
 .env
 *.local
+
+# Test scripts
+test*.js
+test_*.js
 
 # Transcoding streaming artifacts & temporary files
 *.m3u8

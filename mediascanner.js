@@ -20,6 +20,17 @@ const EXT_MAP = {
   ".alac": "audio",
 };
 
+function getAppRoot() {
+  const cwd = process.cwd();
+  if (cwd.includes("target\\debug") || cwd.includes("target/debug")) {
+    return path.join(cwd, "..", "..", "..");
+  }
+  if (cwd.endsWith("src-tauri")) {
+    return path.join(cwd, "..");
+  }
+  return cwd;
+}
+
 /**
  * Classify a file by its extension.
  * Returns "video" | "image" | "audio" | null
@@ -79,7 +90,7 @@ async function walkDir(dirPath, basePath = dirPath) {
  * Load the config and return the libraries array.
  */
 async function loadConfig() {
-  const configPath = path.join(__dirname, "config.json");
+  const configPath = path.join(getAppRoot(), "config.json");
   const raw = await fs.readFile(configPath, "utf-8");
   return JSON.parse(raw);
 }
