@@ -583,6 +583,23 @@
         </div>
 
         <div class="glass p-5 mt-8">
+          <h3 class="text-sm font-semibold mb-3">Account & Security</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium mb-1" style="color: var(--text-tertiary);">New Username</label>
+              <input type="text" id="settings-username-input" class="settings-input w-full" placeholder="Enter new username">
+            </div>
+            <div>
+              <label class="block text-xs font-medium mb-1" style="color: var(--text-tertiary);">New Password</label>
+              <input type="password" id="settings-password-input" class="settings-input w-full" placeholder="Enter new password">
+            </div>
+          </div>
+          <div class="mt-4 flex justify-end">
+            <button class="btn-glass" id="update-auth-btn">${ICONS.save} Update Credentials</button>
+          </div>
+        </div>
+
+        <div class="glass p-5 mt-8">
           <h3 class="text-sm font-semibold mb-3">Server Info</h3>
           <div class="grid grid-cols-2 gap-4 text-sm">
             <div>
@@ -634,6 +651,49 @@
         } catch (e) {
           clearBtn.textContent = "Error";
           clearBtn.disabled = false;
+        }
+      });
+    }
+
+    // Attach update auth handler
+    const updateAuthBtn = document.getElementById("update-auth-btn");
+    if (updateAuthBtn) {
+      updateAuthBtn.addEventListener("click", async () => {
+        const usernameInput = document.getElementById("settings-username-input").value;
+        const passwordInput = document.getElementById("settings-password-input").value;
+        
+        if (!usernameInput || !passwordInput) {
+          showToast("Username and password are required");
+          return;
+        }
+
+        updateAuthBtn.disabled = true;
+        updateAuthBtn.textContent = "Updating...";
+
+        try {
+          const res = await api.authFetch("/api/auth/update", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: usernameInput, password: passwordInput })
+          });
+
+          if (!res.ok) throw new Error("Failed to update credentials");
+          
+          showToast("Credentials updated successfully!");
+          document.getElementById("settings-username-input").value = "";
+          document.getElementById("settings-password-input").value = "";
+          updateAuthBtn.innerHTML = `${ICONS.save} Updated!`;
+          
+          // Force re-login with new credentials
+          setTimeout(() => {
+            localStorage.removeItem("jwt_token");
+            location.reload();
+          }, 1500);
+
+        } catch (e) {
+          showToast("Error updating credentials");
+          updateAuthBtn.innerHTML = `${ICONS.save} Update Credentials`;
+          updateAuthBtn.disabled = false;
         }
       });
     }
