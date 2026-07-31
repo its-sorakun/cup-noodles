@@ -40,10 +40,11 @@ function startTranscodeProcess(sessionId, sessionDir, filePath, playlistPath, qu
   const targetW = parseInt(preset.resolution.split("x")[0]);
   const targetH = parseInt(preset.resolution.split("x")[1]);
   
+  const ffmpegPath = require("ffmpeg-static");
   const ffmpegArgs = [
     "-y",
-    "-hwaccel", "cuda",
-    "-hwaccel_device", "0",
+    "-nostats",
+    "-loglevel", "warning",
     ...(startTime > 0 ? ["-ss", String(startTime)] : []),
     "-i", filePath,
     "-c:v", "h264_nvenc",
@@ -65,17 +66,18 @@ function startTranscodeProcess(sessionId, sessionDir, filePath, playlistPath, qu
   ];
 
   console.log(`[transcode] Starting session ${sessionId} — quality: ${quality}`);
-  console.log(`[transcode] FFmpeg args: ffmpeg ${ffmpegArgs.join(" ")}`);
+  console.log(`[transcode] FFmpeg args: ${ffmpegPath} ${ffmpegArgs.join(" ")}`);
   
-  const ffmpegProcess = spawn("ffmpeg", ffmpegArgs, {
+  const ffmpegProcess = spawn(ffmpegPath, ffmpegArgs, {
     stdio: ["ignore", "ignore", "pipe"],
   });
 
   let stderrBuf = "";
   ffmpegProcess.stderr.on("data", (data) => {
     const text = data.toString();
-    stderrBuf += text;
-    process.stdout.write(`[ffmpeg ${sessionId}] ${text}`);
+    if (stderrBuf.length < 10000) {
+      stderrBuf += text;
+    }
   });
 
   ffmpegProcess.on("error", (err) => {

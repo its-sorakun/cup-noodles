@@ -43,7 +43,8 @@ router.post("/session", async (req, res) => {
     // Extract total duration
     let duration = 0;
     try {
-      const durationStr = execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filePath}"`, { encoding: 'utf-8' });
+      const ffprobePath = require("ffprobe-static").path;
+      const durationStr = execSync(`"${ffprobePath}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filePath}"`, { encoding: 'utf-8' });
       duration = parseFloat(durationStr.trim()) || 0;
     } catch (e) {
       console.error("[transcode] Failed to get duration:", e.message);

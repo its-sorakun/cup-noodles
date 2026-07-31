@@ -213,12 +213,18 @@
           if (statusEl) statusEl.textContent = `Streaming ${quality}`;
           videoEl.play().catch(() => {});
         });
+        let networkRetryCount = 0;
         hls.on(Hls.Events.ERROR, (_, data) => {
           if (data.fatal) {
             if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-              // Try to recover from network errors
-              if (statusEl) statusEl.textContent = `Recovering from network error...`;
-              hls.startLoad();
+              networkRetryCount++;
+              if (networkRetryCount <= 3) {
+                if (statusEl) statusEl.textContent = `Recovering from network error (Attempt ${networkRetryCount}/3)...`;
+                setTimeout(() => hls.startLoad(), 1000 * networkRetryCount);
+              } else {
+                if (statusEl) statusEl.textContent = `Transcode failed: Network error limit reached.`;
+                hls.destroy();
+              }
             } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
               if (statusEl) statusEl.textContent = `Recovering from media error...`;
               hls.recoverMediaError();

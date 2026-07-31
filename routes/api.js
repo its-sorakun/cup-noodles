@@ -275,7 +275,8 @@ router.get("/thumbnail/:libraryName/{*filePath}", async (req, res) => {
           "-q:v", "2",
           cachePath
         ];
-        const ffmpeg = spawn("ffmpeg", args);
+        const ffmpegPath = require("ffmpeg-static");
+        const ffmpeg = spawn(ffmpegPath, args);
         ffmpeg.on("close", (code) => {
           if (code === 0) {
             thumbnailMap.set(cacheKey, true);
