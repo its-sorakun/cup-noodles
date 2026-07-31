@@ -8,10 +8,12 @@ const crypto = require("node:crypto");
 const apiRoutes = require("./routes/api");
 const transcodeRoutes = require("./routes/transcode");
 
+const paths = require("./services/paths");
+
 // ---------------------------------------------------------------------------
 // Load config (sync at startup for PORT/HOST)
 // ---------------------------------------------------------------------------
-const CONFIG = JSON.parse(fs.readFileSync(path.join(__dirname, "config.json"), "utf-8"));
+const CONFIG = JSON.parse(fs.readFileSync(paths.config, "utf-8"));
 
 const PORT = CONFIG?.server?.port || 1337;
 const HOST = CONFIG?.server?.host || "0.0.0.0";
@@ -27,7 +29,7 @@ app.use(express.static(path.join(__dirname, "public")));
 // ---------------------------------------------------------------------------
 // Authentication (JWT)
 // ---------------------------------------------------------------------------
-const AUTH_FILE = path.join(__dirname, "auth.json");
+const AUTH_FILE = paths.auth;
 
 function loadAuth() {
   if (!fs.existsSync(AUTH_FILE)) {
@@ -78,6 +80,22 @@ app.use("/api", (req, res, next) => {
     next();
   } catch (err) {
     return res.status(401).json({ error: "Invalid token" });
+  }
+});
+
+app.post("/api/auth/update", (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: "Username and password are required" });
+    }
+    const authConfig = loadAuth();
+    authConfig.username = username;
+    authConfig.password = password;
+    fs.writeFileSync(AUTH_FILE, JSON.stringify(authConfig, null, 2));
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update credentials", details: err.message });
   }
 });
 
