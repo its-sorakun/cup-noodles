@@ -25,6 +25,12 @@ async function createWindow() {
   // Remove default menu for a cleaner app feel
   Menu.setApplicationMenu(null);
 
+  // Intercept target="_blank" and open in OS default browser
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    require("electron").shell.openExternal(url);
+    return { action: "deny" };
+  });
+
   // Load the web app
   mainWindow.loadURL(`http://localhost:${port}`);
 
