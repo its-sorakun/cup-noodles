@@ -1,6 +1,7 @@
 const fs = require("node:fs");
 const path = require("path");
 const { spawn } = require("node:child_process");
+const paths = require("./paths");
 
 const QUALITY_PRESETS = {
   "1080p": { resolution: "1920x1080", videoBitrate: "4000k", audioBitrate: "192k" },
@@ -40,7 +41,8 @@ function startTranscodeProcess(sessionId, sessionDir, filePath, playlistPath, qu
   const targetW = parseInt(preset.resolution.split("x")[0]);
   const targetH = parseInt(preset.resolution.split("x")[1]);
   
-  const ffmpegPath = require("ffmpeg-static");
+  const rawFfmpegPath = require("ffmpeg-static");
+  const ffmpegPath = paths.getBinPath(rawFfmpegPath);
   const ffmpegArgs = [
     "-y",
     "-nostats",

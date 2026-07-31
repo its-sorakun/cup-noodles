@@ -1,5 +1,9 @@
 const { app, BrowserWindow, Menu } = require("electron");
 const path = require("path");
+
+// Inject user data path for the Express server to use writable config
+process.env.USER_DATA_PATH = app.getPath("userData");
+
 const { startServer } = require("./server");
 
 let mainWindow;

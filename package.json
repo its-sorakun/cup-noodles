@@ -29,6 +29,7 @@
     "files": [
       "main.js",
       "server.js",
+      "mediascanner.js",
       "routes/**/*",
       "services/**/*",
       "middlewares/**/*",
