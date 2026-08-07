@@ -413,8 +413,8 @@ function openMediaDetails(library, index, filename, meta) {
   const posterUrl = meta.posterUrl || thumbUrl;
   
   const html = `
-    <div id="media-details-view" style="position:fixed; inset:0; z-index:9000; background:var(--bg-primary); display:flex; flex-direction:column;">
-      <div class="backdrop-background" style="position:absolute; inset:0; background-image:url('${meta.backdropUrl || posterUrl}'); background-size:cover; background-position:center; filter:blur(20px) brightness(0.3); z-index:0;"></div>
+    <div id="media-details-view" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:999999; background:#070913; display:flex; flex-direction:column; overflow-y:auto;">
+      <div class="backdrop-background" style="position:absolute; top:0; left:0; right:0; bottom:0; background-image:url('${meta.backdropUrl || posterUrl}'); background-size:cover; background-position:center; filter:blur(20px) brightness(0.3); z-index:0;"></div>
       
       <div style="position:relative; z-index:1; padding:20px; display:flex; gap:20px;">
         <button onclick="document.getElementById('media-details-view').remove()" style="background:transparent; border:none; color:white; font-size:1.5rem; cursor:pointer;">${ICONS.back || '←'}</button>
