@@ -39,35 +39,38 @@ Best of all, **your collection travels with you around the house.** Once the vau
 <div align="center">
 
   ### 🔒 Lockscreen
-  <img src="https://imgh.in/host/0lokv4" alt="Lockscreen Screenshot Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+  <img src="https://wsrv.nl/?url=https://imgh.in/host/0lokv4&mask=corner&mrad=12" alt="Lockscreen Screenshot" width="90%">
   
   <br />
 
   ### 🏠 Homescreen
-  <img src="https://imgh.in/host/c4dbw5" alt="Homescreen Screenshot Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+  <img src="https://wsrv.nl/?url=https://imgh.in/host/c4dbw5&mask=corner&mrad=12" alt="Homescreen Screenshot" width="90%">
   
   <br />
   
   ### 🎬 Movies & TV Shows
-  <img src="https://imgh.in/host/4prh9j" alt="Movies Screenshot 1 Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); margin-bottom: 20px;">
-  <img src="https://imgh.in/host/krprw9" alt="Movies Screenshot 2 Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+  <img src="https://wsrv.nl/?url=https://imgh.in/host/4prh9j&mask=corner&mrad=12" alt="Movies Screenshot 1" width="90%">
+  <br /><br />
+  <img src="https://wsrv.nl/?url=https://imgh.in/host/krprw9&mask=corner&mrad=12" alt="Movies Screenshot 2" width="90%">
   
   <br />
   
   ### 🎵 Music Player
-  <img src="https://imgh.in/host/axprt3" alt="Music Screenshot 1 Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); margin-bottom: 20px;">
-  <img src="https://imgh.in/host/5zwfen" alt="Music Screenshot 2 Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+  <img src="https://wsrv.nl/?url=https://imgh.in/host/axprt3&mask=corner&mrad=12" alt="Music Screenshot 1" width="90%">
+  <br /><br />
+  <img src="https://wsrv.nl/?url=https://imgh.in/host/5zwfen&mask=corner&mrad=12" alt="Music Screenshot 2" width="90%">
   
   <br />
   
   ### 🖼️ Wallpapers & Galleries
-  <img src="https://imgh.in/host/hlxx5c" alt="Wallpapers Screenshot Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); margin-bottom: 20px;">
-  <img src="https://imgh.in/host/np6m0s" alt="Wallpapers Screenshot Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); margin-bottom: 20px;">
+  <img src="https://wsrv.nl/?url=https://imgh.in/host/hlxx5c&mask=corner&mrad=12" alt="Wallpapers Screenshot 1" width="90%">
+  <br /><br />
+  <img src="https://wsrv.nl/?url=https://imgh.in/host/np6m0s&mask=corner&mrad=12" alt="Wallpapers Screenshot 2" width="90%">
 
   <br />
   
   ### ⚙️ Settings
-  <img src="https://imgh.in/host/h2tv34" alt="Settings Screenshot Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+  <img src="https://wsrv.nl/?url=https://imgh.in/host/h2tv34&mask=corner&mrad=12" alt="Settings Screenshot" width="90%">
 
 </div>
 
