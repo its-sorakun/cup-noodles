@@ -68,6 +68,7 @@ window.MusicPlayer = {
       </div>
       
       <div class="music-mini-player" id="music-mini" style="display: none;">
+        <div class="music-mini-backdrop" id="music-mini-backdrop"></div>
         <div class="music-mini-cover-container" id="music-mini-maximize">
           <img class="music-mini-cover" id="music-mini-cover" src="" alt="">
         </div>
@@ -188,6 +189,7 @@ window.MusicPlayer = {
       document.getElementById('music-cover').style.backgroundImage = `url("${coverUrl}")`;
       document.getElementById('music-backdrop').style.backgroundImage = `url("${coverUrl}")`;
       document.getElementById('music-mini-cover').src = coverUrl;
+      document.getElementById('music-mini-backdrop').style.backgroundImage = `url("${coverUrl}")`;
 
       if (meta.artist && meta.title && meta.artist !== "Unknown Artist") {
         const lyricsRes = await api.authFetch(`/api/music/lyrics?artist=${encodeURIComponent(meta.artist)}&title=${encodeURIComponent(meta.title)}`);

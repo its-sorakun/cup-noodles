@@ -1379,6 +1379,16 @@ video::cue {
   to { opacity: 1; transform: translateY(0); }
 }
 
+.music-mini-backdrop {
+  position: absolute;
+  inset: -20px; /* Bleed to avoid blurry edges */
+  background-size: cover;
+  background-position: center;
+  filter: blur(20px) brightness(0.4);
+  z-index: -1;
+  transition: background-image 1s ease;
+}
+
 .music-mini-cover-container {
   width: 64px;
   height: 64px;
