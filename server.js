@@ -9,6 +9,7 @@ const crypto = require("node:crypto");
 const apiRoutes = require("./routes/api");
 const transcodeRoutes = require("./routes/transcode");
 const mediaInfoRoutes = require("./routes/mediaInfo");
+const musicRoutes = require("./routes/music");
 
 const paths = require("./services/paths");
 
@@ -104,6 +105,7 @@ app.post("/api/auth/update", (req, res) => {
 // Mount API routes
 app.use("/api/transcode", transcodeRoutes);
 app.use("/api/media-info", mediaInfoRoutes);
+app.use("/api/music", musicRoutes);
 app.use("/api", apiRoutes);
 
 // ---------------------------------------------------------------------------

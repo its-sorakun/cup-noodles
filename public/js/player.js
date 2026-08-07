@@ -711,31 +711,6 @@
   }
 
   // -----------------------------------------------------------------------
-  // Audio Player
-  // -----------------------------------------------------------------------
-  function playAudio(library, index) {
-    const file = library.files[index];
-    const url = api.streamUrl(library.name, file.relativePath);
-    const nameNoExt = file.name.replace(/\.[^.]+$/, "");
-
-    const bar = document.getElementById("audio-player-bar");
-    const audio = document.getElementById("audio-element");
-    const nowPlaying = document.getElementById("audio-now-playing");
-
-    if (bar && audio && nowPlaying) {
-      bar.style.display = "block";
-      nowPlaying.textContent = nameNoExt;
-      audio.src = url;
-      audio.play().catch(() => {}); // Autoplay may be blocked
-
-      // Highlight active item
-      document.querySelectorAll(".audio-item").forEach((el) => el.classList.remove("playing"));
-      const activeItem = document.querySelector(`.audio-item[data-index="${index}"]`);
-      if (activeItem) activeItem.classList.add("playing");
-    }
-  }
-
-  // -----------------------------------------------------------------------
   // Page: Settings
   // -----------------------------------------------------------------------
   async function renderSettings() {

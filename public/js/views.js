@@ -558,19 +558,6 @@ function renderAudioList(library) {
           `;
   }).join("")}
       </div>
-
-      <!-- Audio Player Bar -->
-      <div class="glass mt-8 p-4 max-w-2xl" id="audio-player-bar" style="display: none;">
-        <div class="flex items-center gap-4">
-          <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background: rgba(139, 92, 246, 0.15); color: rgba(139, 92, 246, 0.8);">
-            ${ICONS.headphones}
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="text-sm font-medium truncate" id="audio-now-playing"></div>
-            <audio controls class="w-full mt-2" id="audio-element" style="height: 32px; filter: hue-rotate(250deg) brightness(0.8);"></audio>
-          </div>
-        </div>
-      </div>
     `;
 }
 
@@ -601,7 +588,11 @@ function attachAudioClickHandlers(library) {
       document.querySelectorAll(".audio-item").forEach(el => el.classList.remove("active"));
       item.classList.add("active");
       const index = parseInt(item.dataset.index, 10);
-      playAudio(library, index);
+      if (window.MusicPlayer) {
+        window.MusicPlayer.play(library, index);
+      } else {
+        console.error("MusicPlayer not initialized");
+      }
     });
   });
 }
