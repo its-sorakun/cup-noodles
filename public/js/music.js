@@ -152,7 +152,7 @@ window.MusicPlayer = {
     this.currentIndex = index;
     
     this.loadTrack(this.currentIndex);
-    document.getElementById('music-drawer').classList.add('open');
+    this.maximize();
   },
 
   async loadTrack(index) {
