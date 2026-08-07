@@ -6,7 +6,7 @@ config.json
 auth.json
 .env
 *.local
-
+test.js
 # Transcoding streaming artifacts & temporary files
 *.m3u8
 *.ts

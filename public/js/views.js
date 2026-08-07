@@ -661,8 +661,9 @@ document.addEventListener("DOMContentLoaded", () => {
     resultsContainer.innerHTML = `<div style="text-align:center; padding: 20px;">Searching TMDB...</div>`;
     try {
       const res = await api.authFetch(`/api/metadata/search?query=${encodeURIComponent(query)}`);
-      if (res.results && res.results.length > 0) {
-        resultsContainer.innerHTML = res.results.map(r => `
+      const data = await res.json();
+      if (data.results && data.results.length > 0) {
+        resultsContainer.innerHTML = data.results.map(r => `
           <div class="search-result-item" onclick="window.applyMetadataOverride('${r.id}', '${r.type}')">
             ${r.posterUrl ? `<img src="${r.posterUrl}" class="search-result-poster">` : `<div class="search-result-poster"></div>`}
             <div>
