@@ -39,35 +39,32 @@ Best of all, **your collection travels with you around the house.** Once the vau
 <div align="center">
 
   ### 🔒 Lockscreen
-  <!-- 
-    TODO: Add Lockscreen Screenshot here 
-  -->
   <img src="https://imgh.in/host/0lokv4" alt="Lockscreen Screenshot Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
   
-  <br /><br /><br />
+  <br />
 
   ### 🏠 Homescreen
   <img src="https://imgh.in/host/c4dbw5" alt="Homescreen Screenshot Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
   
-  <br /><br /><br />
+  <br />
   
   ### 🎬 Movies & TV Shows
   <img src="https://imgh.in/host/4prh9j" alt="Movies Screenshot 1 Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); margin-bottom: 20px;">
   <img src="https://imgh.in/host/krprw9" alt="Movies Screenshot 2 Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
   
-  <br /><br /><br />
+  <br />
   
   ### 🎵 Music Player
   <img src="https://imgh.in/host/axprt3" alt="Music Screenshot 1 Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); margin-bottom: 20px;">
   <img src="https://imgh.in/host/5zwfen" alt="Music Screenshot 2 Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
   
-  <br /><br /><br />
+  <br />
   
   ### 🖼️ Wallpapers & Galleries
   <img src="https://imgh.in/host/hlxx5c" alt="Wallpapers Screenshot Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); margin-bottom: 20px;">
   <img src="https://imgh.in/host/np6m0s" alt="Wallpapers Screenshot Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); margin-bottom: 20px;">
 
-  <br /><br /><br />
+  <br />
   
   ### ⚙️ Settings
   <img src="https://imgh.in/host/h2tv34" alt="Settings Screenshot Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
@@ -119,6 +116,7 @@ When you open a video, simply pick your desired quality from the player controls
 | `480p` | 854 × 480 | Slower connections |
 | `360p` | 640 × 360 | Very weak signal |
 | `⚡ Direct` | Original | LAN desktop playback, no transcoding |
+| `🔄 Remux` | Original | Direct stream copy, no quality loss packaging |
 
 ---
 
