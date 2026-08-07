@@ -6,16 +6,14 @@ const mime = require("mime-types");
 const crypto = require("node:crypto");
 const { spawn } = require("node:child_process");
 const { scanAll, scanByName, loadConfig } = require("../mediascanner");
+const paths = require("../services/paths");
 
 const router = express.Router();
 
 // ---------------------------------------------------------------------------
 // Thumbnail Caching & Concurrency Queue
 // ---------------------------------------------------------------------------
-const THUMB_CACHE_DIR = path.join(__dirname, "..", ".thumbnails");
-if (!fs.existsSync(THUMB_CACHE_DIR)) {
-  fs.mkdirSync(THUMB_CACHE_DIR, { recursive: true });
-}
+const THUMB_CACHE_DIR = paths.thumbnails;
 
 // In-Memory Hash Map for O(1) cache lookups
 const thumbnailMap = new Map();
@@ -143,7 +141,7 @@ router.post("/config/library", async (req, res) => {
       return res.status(400).json({ error: "Library name is required" });
     }
 
-    const configPath = path.join(__dirname, "..", "config.json");
+    const configPath = paths.config;
     const config = await loadConfig();
 
     const existing = config.libraries.find(
@@ -320,7 +318,9 @@ router.get("/thumbnail/:libraryName/{*filePath}", async (req, res) => {
           "-q:v", "2",
           cachePath
         ];
-        const ffmpeg = spawn("ffmpeg", args);
+        const rawFfmpegPath = require("ffmpeg-static");
+        const ffmpegPath = paths.getBinPath(rawFfmpegPath);
+        const ffmpeg = spawn(ffmpegPath, args);
         ffmpeg.on("close", (code) => {
           if (code === 0) {
             thumbnailMap.set(cacheKey, true);

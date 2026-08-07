@@ -9,10 +9,48 @@
       .spin-anim { animation: spin-local 1s linear infinite; }
       
       .player-fullscreen-container { position: relative; width: 100%; max-width: 92vw; border-radius: var(--radius-md); overflow: hidden; box-shadow: 0 25px 100px -20px rgba(0,0,0,0.8); background: black; }
-      .player-fullscreen-container:fullscreen { max-width: none !important; width: 100% !important; height: 100% !important; border-radius: 0; display: flex; align-items: center; justify-content: center; }
-      .player-fullscreen-container:-webkit-full-screen { max-width: none !important; width: 100% !important; height: 100% !important; border-radius: 0; display: flex; align-items: center; justify-content: center; }
-      .player-fullscreen-container:fullscreen video { max-height: none !important; width: 100% !important; height: 100% !important; object-fit: contain; }
-      .player-fullscreen-container:-webkit-full-screen video { max-height: none !important; width: 100% !important; height: 100% !important; object-fit: contain; }
+      .player-fullscreen-container:fullscreen {
+        max-width: none !important;
+        max-height: none !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        border-radius: 0 !important;
+        background: black !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+      .player-fullscreen-container:-webkit-full-screen {
+        max-width: none !important;
+        max-height: none !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        border-radius: 0 !important;
+        background: black !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+      .player-fullscreen-container:fullscreen video {
+        max-width: none !important;
+        max-height: none !important;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain !important;
+      }
+      .player-fullscreen-container:-webkit-full-screen video {
+        max-width: none !important;
+        max-height: none !important;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain !important;
+      }
       
       .player-fullscreen-container { cursor: default; }
       .player-fullscreen-container.hide-controls { cursor: none; }
@@ -213,12 +251,18 @@
           if (statusEl) statusEl.textContent = `Streaming ${quality}`;
           videoEl.play().catch(() => {});
         });
+        let networkRetryCount = 0;
         hls.on(Hls.Events.ERROR, (_, data) => {
           if (data.fatal) {
             if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-              // Try to recover from network errors
-              if (statusEl) statusEl.textContent = `Recovering from network error...`;
-              hls.startLoad();
+              networkRetryCount++;
+              if (networkRetryCount <= 3) {
+                if (statusEl) statusEl.textContent = `Recovering from network error (Attempt ${networkRetryCount}/3)...`;
+                setTimeout(() => hls.startLoad(), 1000 * networkRetryCount);
+              } else {
+                if (statusEl) statusEl.textContent = `Transcode failed: Network error limit reached.`;
+                hls.destroy();
+              }
             } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
               if (statusEl) statusEl.textContent = `Recovering from media error...`;
               hls.recoverMediaError();
@@ -440,10 +484,24 @@
         }
       });
 
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          if (playerContainer.requestFullscreen) playerContainer.requestFullscreen();
+          else if (playerContainer.webkitRequestFullscreen) playerContainer.webkitRequestFullscreen();
+        } else {
+          if (document.exitFullscreen) document.exitFullscreen();
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        }
+      }
+
       fsBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        if (videoEl.requestFullscreen) videoEl.requestFullscreen();
-        else if (videoEl.webkitRequestFullscreen) videoEl.webkitRequestFullscreen();
+        toggleFullscreen();
+      });
+
+      videoEl.addEventListener("dblclick", (e) => {
+        e.stopPropagation();
+        toggleFullscreen();
       });
 
       // Auto-start at 720p by default
@@ -595,7 +653,7 @@
 
         <div class="glass p-5 mt-8">
           <h3 class="text-sm font-semibold mb-3">Server Info</h3>
-          <div class="grid grid-cols-2 gap-4 text-sm">
+          <div class="grid grid-cols-2 gap-4 text-sm mb-4">
             <div>
               <span style="color: var(--text-tertiary);">Port</span>
               <p class="font-mono">${config.server?.port || 1337}</p>
@@ -603,6 +661,13 @@
             <div>
               <span style="color: var(--text-tertiary);">Host</span>
               <p class="font-mono">${config.server?.host || "0.0.0.0"}</p>
+            </div>
+          </div>
+          <div class="pt-3 border-t" style="border-color: rgba(255,255,255,0.1);">
+            <span style="color: var(--text-tertiary); font-size: 12px;">You are streaming at:</span>
+            <div class="mt-1 flex items-center gap-3">
+              <a href="http://127.0.0.1:${config.server?.port || 1337}" target="_blank" class="font-mono text-sm hover:underline" style="color: #60a5fa;">http://127.0.0.1:${config.server?.port || 1337}</a>
+              <a href="http://127.0.0.1:${config.server?.port || 1337}" target="_blank" class="btn-glass" style="padding: 4px 12px; font-size: 11px;">Open in Web</a>
             </div>
           </div>
         </div>

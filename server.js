@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const path = require("path");
 const fs = require("node:fs");
@@ -114,15 +115,23 @@ app.get("{*path}", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// ---------------------------------------------------------------------------
-// Start server
-// ---------------------------------------------------------------------------
-app.listen(PORT, HOST, () => {
-  console.log(`\n  ╭─────────────────────────────────────────╮`);
-  console.log(`  │                                         │`);
-  console.log(`  │   🍜  Cup Noodles Media Server          │`);
-  console.log(`  │                                         │`);
-  console.log(`  │   Local:  http://localhost:${PORT}        │`);
-  console.log(`  │                                         │`);
-  console.log(`  ╰─────────────────────────────────────────╯\n`);
-});
+function startServer(port = PORT, host = HOST) {
+  return new Promise((resolve) => {
+    const server = app.listen(port, host, () => {
+      console.log(`\n  ╭─────────────────────────────────────────╮`);
+      console.log(`  │                                         │`);
+      console.log(`  │   🍜  Cup Noodles Media Server          │`);
+      console.log(`  │                                         │`);
+      console.log(`  │   Local:  http://localhost:${port}        │`);
+      console.log(`  │                                         │`);
+      console.log(`  ╰─────────────────────────────────────────╯\n`);
+      resolve(server);
+    });
+  });
+}
+
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = { app, startServer };

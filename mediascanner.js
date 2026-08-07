@@ -78,8 +78,10 @@ async function walkDir(dirPath, basePath = dirPath) {
 /**
  * Load the config and return the libraries array.
  */
+const paths = require("./services/paths");
+
 async function loadConfig() {
-  const configPath = path.join(__dirname, "config.json");
+  const configPath = paths.config;
   const raw = await fs.readFile(configPath, "utf-8");
   return JSON.parse(raw);
 }
