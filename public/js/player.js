@@ -484,6 +484,18 @@
         }
       });
 
+      function updateFullscreenIcon() {
+        if (document.fullscreenElement) {
+          fsBtn.innerHTML = ICONS.minimize || ICONS.maximize;
+        } else {
+          fsBtn.innerHTML = ICONS.maximize;
+        }
+      }
+      
+      window._currentFullscreenListener = updateFullscreenIcon;
+      document.addEventListener("fullscreenchange", updateFullscreenIcon);
+      updateFullscreenIcon();
+
       function toggleFullscreen() {
         if (!document.fullscreenElement) {
           if (playerContainer.requestFullscreen) playerContainer.requestFullscreen();
@@ -556,6 +568,10 @@
     const overlay = document.getElementById("media-viewer-overlay");
     if (overlay) overlay.remove();
     document.removeEventListener("keydown", viewerKeyHandler);
+    if (window._currentFullscreenListener) {
+      document.removeEventListener("fullscreenchange", window._currentFullscreenListener);
+      window._currentFullscreenListener = null;
+    }
 
     if (killSession) {
       if (currentHlsInstance) {
