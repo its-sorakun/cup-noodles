@@ -624,6 +624,10 @@ document.addEventListener("DOMContentLoaded", () => {
           <button id="metadata-search-btn" class="btn btn-primary" style="padding: 10px 15px;">Search</button>
           <button id="metadata-search-close" style="background:transparent; border:none; color:white; cursor:pointer;">✖</button>
         </div>
+        <div style="padding: 10px 20px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.2);">
+          <input type="checkbox" id="metadata-apply-folder" checked style="accent-color: var(--accent-color); cursor: pointer;">
+          <label for="metadata-apply-folder" style="font-size: 0.9rem; color: var(--text-secondary); cursor: pointer; user-select: none;">Apply to all files in this folder</label>
+        </div>
         <div class="search-dialog-results" id="metadata-search-results">
           <div style="text-align:center; padding: 20px; color: var(--text-tertiary);">Search for a title to fix the metadata match.</div>
         </div>
@@ -682,12 +686,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.applyMetadataOverride = async (tmdbId, type) => {
     if (!currentTargetFilename) return;
+    const applyToFolder = document.getElementById("metadata-apply-folder").checked;
     resultsContainer.innerHTML = `<div style="text-align:center; padding: 20px;">Applying fix...</div>`;
     try {
       await api.authFetch("/api/metadata/match", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename: currentTargetFilename, tmdbId, type })
+        body: JSON.stringify({ filename: currentTargetFilename, tmdbId, type, applyToFolder })
       });
       dialog.style.display = "none";
       // Refresh library to show new metadata

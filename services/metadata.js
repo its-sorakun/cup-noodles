@@ -153,6 +153,11 @@ async function searchTMDB(query, year = null) {
  * Gets metadata for a file. Uses cache if available, otherwise queries TMDB.
  */
 async function getMetadata(filename) {
+  const dirKey = "DIR:" + path.dirname(filename);
+  if (metadataCache[dirKey] !== undefined) {
+    return metadataCache[dirKey];
+  }
+
   if (metadataCache[filename] !== undefined) {
     // If it's cached (even as null for not found), return it
     return metadataCache[filename];
@@ -180,7 +185,7 @@ async function getMetadata(filename) {
 /**
  * Manually override a metadata match
  */
-async function setMetadataOverride(filename, tmdbId, type = "movie") {
+async function setMetadataOverride(filename, tmdbId, type = "movie", applyToFolder = false) {
   const apiKey = process.env.TMDB_API_KEY;
   if (!apiKey) throw new Error("TMDB API key not configured");
 
@@ -201,7 +206,18 @@ async function setMetadataOverride(filename, tmdbId, type = "movie") {
       rating: result.vote_average ? parseFloat(result.vote_average).toFixed(1) : null
     };
 
-    metadataCache[filename] = tmdbData;
+    if (applyToFolder) {
+      const dirPath = path.dirname(filename);
+      metadataCache["DIR:" + dirPath] = tmdbData;
+      // Purge individual file caches in this directory so they inherit the folder metadata
+      Object.keys(metadataCache).forEach(key => {
+        if (!key.startsWith("DIR:") && path.dirname(key) === dirPath) {
+          delete metadataCache[key];
+        }
+      });
+    } else {
+      metadataCache[filename] = tmdbData;
+    }
     saveCache();
     return tmdbData;
   });

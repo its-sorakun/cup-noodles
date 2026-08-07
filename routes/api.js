@@ -123,10 +123,10 @@ router.get("/metadata/info", async (req, res) => {
 // Override metadata with a specific TMDB ID
 router.post("/metadata/match", async (req, res) => {
   try {
-    const { filename, tmdbId, type } = req.body;
+    const { filename, tmdbId, type, applyToFolder } = req.body;
     if (!filename || !tmdbId || !type) return res.status(400).json({ error: "Missing parameters" });
     const metadataService = require("../services/metadata");
-    const meta = await metadataService.setMetadataOverride(filename, tmdbId, type);
+    const meta = await metadataService.setMetadataOverride(filename, tmdbId, type, applyToFolder);
     res.json({ success: true, metadata: meta });
   } catch (err) {
     res.status(500).json({ error: "Failed to override metadata", details: err.message });
