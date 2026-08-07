@@ -9,10 +9,48 @@
       .spin-anim { animation: spin-local 1s linear infinite; }
       
       .player-fullscreen-container { position: relative; width: 100%; max-width: 92vw; border-radius: var(--radius-md); overflow: hidden; box-shadow: 0 25px 100px -20px rgba(0,0,0,0.8); background: black; }
-      .player-fullscreen-container:fullscreen { max-width: none !important; width: 100% !important; height: 100% !important; border-radius: 0; display: flex; align-items: center; justify-content: center; }
-      .player-fullscreen-container:-webkit-full-screen { max-width: none !important; width: 100% !important; height: 100% !important; border-radius: 0; display: flex; align-items: center; justify-content: center; }
-      .player-fullscreen-container:fullscreen video { max-height: none !important; width: 100% !important; height: 100% !important; object-fit: contain; }
-      .player-fullscreen-container:-webkit-full-screen video { max-height: none !important; width: 100% !important; height: 100% !important; object-fit: contain; }
+      .player-fullscreen-container:fullscreen {
+        max-width: none !important;
+        max-height: none !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        border-radius: 0 !important;
+        background: black !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+      .player-fullscreen-container:-webkit-full-screen {
+        max-width: none !important;
+        max-height: none !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        border-radius: 0 !important;
+        background: black !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+      .player-fullscreen-container:fullscreen video {
+        max-width: none !important;
+        max-height: none !important;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain !important;
+      }
+      .player-fullscreen-container:-webkit-full-screen video {
+        max-width: none !important;
+        max-height: none !important;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain !important;
+      }
       
       .player-fullscreen-container { cursor: default; }
       .player-fullscreen-container.hide-controls { cursor: none; }
@@ -446,10 +484,24 @@
         }
       });
 
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          if (playerContainer.requestFullscreen) playerContainer.requestFullscreen();
+          else if (playerContainer.webkitRequestFullscreen) playerContainer.webkitRequestFullscreen();
+        } else {
+          if (document.exitFullscreen) document.exitFullscreen();
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        }
+      }
+
       fsBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        if (videoEl.requestFullscreen) videoEl.requestFullscreen();
-        else if (videoEl.webkitRequestFullscreen) videoEl.webkitRequestFullscreen();
+        toggleFullscreen();
+      });
+
+      videoEl.addEventListener("dblclick", (e) => {
+        e.stopPropagation();
+        toggleFullscreen();
       });
 
       // Auto-start at 720p by default
