@@ -478,7 +478,7 @@ function renderMediaItem(library, file, index) {
     const thumbUrl = api.thumbnailUrl(library.name, file.relativePath, 500);
     const nameNoExt = file.name.replace(/\.[^.]+$/, "");
     return `
-      <div class="media-card lazy-meta" data-index="${index}" data-filename="${escapeHtml(file.name).replace(/"/g, "&quot;")}" id="media-item-${index}">
+      <div class="media-card lazy-meta" data-index="${index}" data-filename="${escapeHtml(file.relativePath).replace(/"/g, "&quot;")}" id="media-item-${index}">
         <img class="media-card-thumbnail" src="${thumbUrl}" alt="${escapeHtml(file.name)}" loading="lazy">
         <div class="media-card-overlay">
           <div class="media-card-title">${escapeHtml(nameNoExt)}</div>
@@ -526,7 +526,7 @@ function renderMediaItemFallback(library, file, index) {
             <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(139, 92, 246, 0.7); backdrop-filter: blur(6px);">
               ${ICONS.play}
             </div>
-            <button class="btn btn-secondary" onclick="event.stopPropagation(); window.openFixMatchDialog('${escapeHtml(file.name).replace(/'/g, "\\'")}')" style="padding: 6px 12px; font-size: 0.75rem; border-radius: 12px; backdrop-filter: blur(4px); background: rgba(0,0,0,0.6); color: white; border: 1px solid rgba(255,255,255,0.2);">Fix Match</button>
+            <button class="btn btn-secondary" onclick="event.stopPropagation(); window.openFixMatchDialog('${escapeHtml(file.relativePath).replace(/'/g, "\\'")}')" style="padding: 6px 12px; font-size: 0.75rem; border-radius: 12px; backdrop-filter: blur(4px); background: rgba(0,0,0,0.6); color: white; border: 1px solid rgba(255,255,255,0.2);">Fix Match</button>
           </div>
         ` : ""}
         <div class="media-item__info">
@@ -653,8 +653,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.openFixMatchDialog = (filename) => {
     currentTargetFilename = filename;
-    input.value = filename.replace(/\.[^.]+$/, "");
-    resultsContainer.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-tertiary);">Hit search to find matches for:<br><strong>${escapeHtml(filename)}</strong></div>`;
+    const basename = filename.split('/').pop().split('\\').pop();
+    input.value = basename.replace(/\.[^.]+$/, "");
+    resultsContainer.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-tertiary);">Hit search to find matches for:<br><strong>${escapeHtml(basename)}</strong></div>`;
     dialog.style.display = "flex";
   };
 
