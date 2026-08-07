@@ -8,7 +8,6 @@ window.MusicPlayer = {
 
   init() {
     this.createDOM();
-    this.bindEvents();
     
     // Attach audio events
     this.audio.addEventListener('timeupdate', () => this.updateProgress());
@@ -22,12 +21,12 @@ window.MusicPlayer = {
     const html = `
       <div class="music-player-drawer" id="music-drawer">
         <div class="music-player-backdrop" id="music-backdrop"></div>
-        <div class="music-top-bar">
-          <button class="music-close-btn" id="music-close">${window.ICONS?.close || '✖'}</button>
-        </div>
         
         <div class="music-content-wrapper">
           <div class="music-main-panel">
+            <button class="music-circle-btn" id="music-close" title="Minimize" style="position: absolute; top: 20px; left: 20px; z-index: 10;">${window.ICONS?.chevronDown || 'v'}</button>
+            <button class="music-circle-btn" id="music-toggle-sidebar" title="Toggle Sidebar" style="position: absolute; top: 20px; right: 20px; z-index: 10;">${window.ICONS?.list || '≡'}</button>
+            
             <div class="music-cover" id="music-cover"></div>
             
             <div class="music-info-container">
@@ -51,7 +50,7 @@ window.MusicPlayer = {
             </div>
           </div>
           
-          <div class="music-sidebar">
+          <div class="music-sidebar" id="music-sidebar">
             <div class="music-tabs">
               <div class="music-tab active" data-target="queue">Up Next</div>
               <div class="music-tab" data-target="lyrics">Lyrics</div>
@@ -67,12 +66,36 @@ window.MusicPlayer = {
           </div>
         </div>
       </div>
+      
+      <div class="music-mini-player" id="music-mini" style="display: none;">
+        <div class="music-mini-cover-container" id="music-mini-maximize">
+          <img class="music-mini-cover" id="music-mini-cover" src="" alt="">
+        </div>
+        <div class="music-mini-info" id="music-mini-maximize-info">
+          <div class="music-mini-title" id="music-mini-title">Song Title</div>
+          <div class="music-mini-artist" id="music-mini-artist">Artist</div>
+        </div>
+        <div class="music-mini-controls">
+          <button class="music-mini-btn" id="music-mini-play">${window.ICONS?.playSmall || 'Play'}</button>
+          <button class="music-mini-btn" id="music-mini-next">${window.ICONS?.skipForward || 'Next'}</button>
+          <button class="music-mini-btn" id="music-mini-close">${window.ICONS?.x || '✖'}</button>
+        </div>
+        <div class="music-mini-progress-bg">
+          <div class="music-mini-progress-fill" id="music-mini-progress"></div>
+        </div>
+      </div>
     `;
     document.body.insertAdjacentHTML('beforeend', html);
+    this.bindEvents();
+    this.isMinimized = false;
   },
 
   bindEvents() {
-    document.getElementById('music-close').addEventListener('click', () => this.close());
+    document.getElementById('music-close').addEventListener('click', () => this.minimize());
+    document.getElementById('music-toggle-sidebar').addEventListener('click', () => {
+      document.getElementById('music-sidebar').classList.toggle('collapsed');
+    });
+    
     document.getElementById('music-play').addEventListener('click', () => this.togglePlay());
     document.getElementById('music-next').addEventListener('click', () => this.next());
     document.getElementById('music-prev').addEventListener('click', () => this.prev());
@@ -81,8 +104,9 @@ window.MusicPlayer = {
     
     const progress = document.getElementById('music-progress');
     progress.addEventListener('input', (e) => {
-      const time = (e.target.value / 100) * this.audio.duration;
-      if (!isNaN(time)) this.audio.currentTime = time;
+      if (this.audio.duration) {
+        this.audio.currentTime = (e.target.value / 100) * this.audio.duration;
+      }
     });
 
     document.querySelectorAll('.music-tab').forEach(tab => {
@@ -93,16 +117,38 @@ window.MusicPlayer = {
         document.getElementById(`music-tab-${tab.dataset.target}`).classList.add('active');
       });
     });
+
+    // Mini Player Events
+    document.getElementById('music-mini-maximize').addEventListener('click', () => this.maximize());
+    document.getElementById('music-mini-maximize-info').addEventListener('click', () => this.maximize());
+    document.getElementById('music-mini-close').addEventListener('click', () => this.close());
+    document.getElementById('music-mini-play').addEventListener('click', () => this.togglePlay());
+    document.getElementById('music-mini-next').addEventListener('click', () => this.next());
+  },
+
+  minimize() {
+    this.isMinimized = true;
+    document.getElementById('music-drawer').classList.remove('open');
+    document.getElementById('music-mini').style.display = 'flex';
+  },
+
+  maximize() {
+    this.isMinimized = false;
+    document.getElementById('music-mini').style.display = 'none';
+    document.getElementById('music-drawer').classList.add('open');
+  },
+
+  close() {
+    this.isMinimized = false;
+    this.audio.pause();
+    document.getElementById('music-drawer').classList.remove('open');
+    document.getElementById('music-mini').style.display = 'none';
   },
 
   play(library, index) {
     this.library = library;
-    this.queue = [...library.files]; // Full library as queue for now
-    if (this.shuffle) {
-      this.currentIndex = index;
-    } else {
-      this.currentIndex = index;
-    }
+    this.queue = [...library.files];
+    this.currentIndex = index;
     
     this.loadTrack(this.currentIndex);
     document.getElementById('music-drawer').classList.add('open');
@@ -112,11 +158,9 @@ window.MusicPlayer = {
     const file = this.queue[index];
     if (!file) return;
 
-    // Set Audio Source
     this.audio.src = api.streamUrl(this.library.name, file.relativePath);
     this.audio.play().catch(e => console.warn('Autoplay prevented', e));
 
-    // Reset UI
     document.getElementById('music-title').textContent = file.name.replace(/\.[^.]+$/, "");
     document.getElementById('music-artist').textContent = "Loading...";
     document.getElementById('music-tech').textContent = "Loading info...";
@@ -126,7 +170,6 @@ window.MusicPlayer = {
     
     this.updateQueueUI();
 
-    // Fetch Metadata
     try {
       const res = await api.authFetch(`/api/music/metadata/${encodeURIComponent(this.library.name)}/${encodeURIComponent(file.relativePath)}`);
       const meta = await res.json();
@@ -134,16 +177,18 @@ window.MusicPlayer = {
       document.getElementById('music-title').textContent = meta.title || file.name.replace(/\.[^.]+$/, "");
       document.getElementById('music-artist').textContent = meta.artist || "Unknown Artist";
       
+      document.getElementById('music-mini-title').textContent = meta.title || file.name.replace(/\.[^.]+$/, "");
+      document.getElementById('music-mini-artist').textContent = meta.artist || "Unknown Artist";
+      
       const kbs = Math.round(meta.bitrate / 1000);
       const khz = (meta.sampleRate / 1000).toFixed(1);
       document.getElementById('music-tech').textContent = `${meta.codec.toUpperCase()} · ${meta.bitDepth}-bit · ${khz}kHz · ${kbs > 0 ? kbs + 'kbps' : 'Unknown'}`;
 
-      // Fetch cover art
       const coverUrl = `/api/music/cover/${encodeURIComponent(this.library.name)}/${encodeURIComponent(file.relativePath)}`;
       document.getElementById('music-cover').style.backgroundImage = `url("${coverUrl}")`;
       document.getElementById('music-backdrop').style.backgroundImage = `url("${coverUrl}")`;
+      document.getElementById('music-mini-cover').src = coverUrl;
 
-      // Fetch Lyrics
       if (meta.artist && meta.title && meta.artist !== "Unknown Artist") {
         const lyricsRes = await api.authFetch(`/api/music/lyrics?artist=${encodeURIComponent(meta.artist)}&title=${encodeURIComponent(meta.title)}`);
         if (lyricsRes.ok) {
@@ -169,15 +214,27 @@ window.MusicPlayer = {
     
     if (!isNaN(total) && total > 0) {
       document.getElementById('music-progress').value = (current / total) * 100;
+      document.getElementById('music-mini-progress').style.width = ((current / total) * 100) + '%';
     }
   },
 
   updatePlayState() {
     const playBtn = document.getElementById('music-play');
+    const miniPlayBtn = document.getElementById('music-mini-play');
     if (this.audio.paused) {
       playBtn.innerHTML = window.ICONS?.play || 'Play';
+      if(miniPlayBtn) miniPlayBtn.innerHTML = window.ICONS?.playSmall || 'Play';
     } else {
       playBtn.innerHTML = window.ICONS?.pause || 'Pause';
+      if(miniPlayBtn) miniPlayBtn.innerHTML = window.ICONS?.pause || 'Pause';
+    }
+  },
+
+  togglePlay() {
+    if (this.audio.paused) {
+      this.audio.play();
+    } else {
+      this.audio.pause();
     }
   },
 
