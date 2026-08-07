@@ -30,6 +30,17 @@ async function createWindow() {
   // Remove default menu for a cleaner app feel
   Menu.setApplicationMenu(null);
 
+  // Re-enable essential developer shortcuts since menu is hidden
+  mainWindow.webContents.on("before-input-event", (event, input) => {
+    if (input.control && input.key.toLowerCase() === "r") {
+      mainWindow.reload();
+      event.preventDefault();
+    } else if (input.control && input.shift && input.key.toLowerCase() === "i") {
+      mainWindow.webContents.toggleDevTools();
+      event.preventDefault();
+    }
+  });
+
   // Intercept target="_blank" and open in OS default browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     require("electron").shell.openExternal(url);
