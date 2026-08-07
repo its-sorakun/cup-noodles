@@ -551,10 +551,16 @@ body {
   .media-grid--wallpaper {
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   }
+  
+  .media-grid--music {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 32px;
+  }
 
   .media-grid>*,
   .media-grid--large>*,
-  .media-grid--wallpaper>* {
+  .media-grid--wallpaper>*,
+  .media-grid--music>* {
     flex: initial;
     max-width: none;
   }
@@ -1348,6 +1354,41 @@ video::cue {
 
 .music-circle-btn:active {
   transform: scale(0.95);
+}
+
+/* ==========================================================================
+   Audio Grid Items (Squircle)
+   ========================================================================== */
+.audio-item {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.audio-item:hover {
+  transform: translateY(-5px) scale(1.03);
+}
+
+.audio-item .media-item__thumb {
+  aspect-ratio: 1 / 1;
+  border-radius: 28px; /* Big squircle shape */
+  box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+}
+
+.audio-item .media-item__info {
+  text-align: center;
+  padding: 16px 8px;
+}
+
+.audio-item .media-item__name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  margin-bottom: 4px;
+}
+
+.audio-item .media-item__meta {
+  font-size: 0.85rem;
 }
 
 /* ==========================================================================

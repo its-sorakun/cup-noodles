@@ -539,20 +539,35 @@ function renderMediaItemFallback(library, file, index) {
 
 function renderAudioList(library) {
   return `
-      <div class="flex flex-col gap-3 max-w-2xl mx-auto">
+      <div class="media-grid media-grid--music px-4">
         ${library.files.map((f, i) => {
     const nameNoExt = f.name.replace(/\.[^.]+$/, "");
+    const ext = getFileExtension(f.name);
+    const coverUrl = "/api/music/cover/" + encodeURIComponent(library.name) + "/" + encodeURIComponent(f.relativePath);
     return `
-            <div class="audio-item" data-index="${i}" data-name="${escapeHtml(f.name.toLowerCase())}" id="audio-item-${i}">
-              <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background: rgba(139, 92, 246, 0.1); color: rgba(139, 92, 246, 0.8);">
-                ${ICONS.music}
+            <div class="media-item audio-item flex flex-col items-center" data-index="${i}" data-name="${escapeHtml(f.name.toLowerCase())}" id="audio-item-${i}">
+              <div class="w-full relative shadow-[0_15px_35px_rgba(0,0,0,0.5)] group overflow-hidden" style="aspect-ratio: 1/1; border-radius: 28px;">
+                <img 
+                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                  src="${coverUrl.replace(/'/g, "%27")}" 
+                  alt="${escapeHtml(f.name)}"
+                  loading="lazy"
+                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                >
+                <div class="fallback-thumb flex items-center justify-center w-full h-full transition-transform duration-300 group-hover:scale-105" style="background: var(--surface-2); display:none; position:absolute; top:0; left:0;">
+                  <div class="text-center text-white/40" style="width: 80px; height: 80px;">
+                    ${ICONS.music}
+                  </div>
+                </div>
+                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div class="w-14 h-14 rounded-full flex items-center justify-center" style="background: rgba(139, 92, 246, 0.8); backdrop-filter: blur(8px);">
+                    ${ICONS.play}
+                  </div>
+                </div>
               </div>
-              <div class="flex-1 min-w-0">
-                <div class="text-sm font-medium truncate">${escapeHtml(nameNoExt)}</div>
-                <div class="text-xs" style="color: var(--text-tertiary);">${formatSize(f.size)} · ${getFileExtension(f.name)}</div>
-              </div>
-              <div class="w-8 h-8 rounded-full flex items-center justify-center play-btn icon-box">
-                ${ICONS.playSmall}
+              <div class="media-item__info w-full">
+                <div class="media-item__name" title="${escapeHtml(f.name)}">${escapeHtml(nameNoExt)}</div>
+                <div class="media-item__meta">${formatSize(f.size)} · ${ext}</div>
               </div>
             </div>
           `;
@@ -574,7 +589,7 @@ function filterMediaGrid(library) {
 // Click handlers — open media viewer
 // -----------------------------------------------------------------------
 function attachMediaClickHandlers(library) {
-  document.querySelectorAll(".media-item, .media-card").forEach((item) => {
+  document.querySelectorAll(".media-item:not(.audio-item), .media-card:not(.audio-item)").forEach((item) => {
     item.addEventListener("click", () => {
       const index = parseInt(item.dataset.index, 10);
       openMediaViewer(library, index);

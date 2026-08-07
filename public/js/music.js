@@ -186,10 +186,10 @@ window.MusicPlayer = {
       document.getElementById('music-tech').textContent = `${meta.codec.toUpperCase()} · ${meta.bitDepth}-bit · ${khz}kHz · ${kbs > 0 ? kbs + 'kbps' : 'Unknown'}`;
 
       const coverUrl = `/api/music/cover/${encodeURIComponent(this.library.name)}/${encodeURIComponent(file.relativePath)}`;
-      document.getElementById('music-cover').style.backgroundImage = `url("${coverUrl}")`;
-      document.getElementById('music-backdrop').style.backgroundImage = `url("${coverUrl}")`;
+      document.getElementById('music-cover').style.backgroundImage = `url('${coverUrl.replace(/'/g, "%27")}')`;
+      document.getElementById('music-backdrop').style.backgroundImage = `url('${coverUrl.replace(/'/g, "%27")}')`;
       document.getElementById('music-mini-cover').src = coverUrl;
-      document.getElementById('music-mini-backdrop').style.backgroundImage = `url("${coverUrl}")`;
+      document.getElementById('music-mini-backdrop').style.backgroundImage = `url('${coverUrl.replace(/'/g, "%27")}')`;
 
       if (meta.artist && meta.title && meta.artist !== "Unknown Artist") {
         const lyricsRes = await api.authFetch(`/api/music/lyrics?artist=${encodeURIComponent(meta.artist)}&title=${encodeURIComponent(meta.title)}`);
@@ -303,9 +303,10 @@ window.MusicPlayer = {
     const container = document.getElementById('music-tab-queue');
     container.innerHTML = this.queue.map((file, i) => {
       const isPlaying = i === this.currentIndex;
+      const coverUrl = `/api/music/cover/${encodeURIComponent(this.library.name)}/${encodeURIComponent(file.relativePath)}`;
       return `
         <div class="queue-item ${isPlaying ? 'playing' : ''}" onclick="MusicPlayer.loadTrack(${i})">
-          <div class="queue-item-cover"></div>
+          <div class="queue-item-cover" style="background-image: url('${coverUrl.replace(/'/g, "%27")}');"></div>
           <div class="queue-item-info">
             <div class="queue-item-title">${file.name.replace(/\.[^.]+$/, "")}</div>
             <div class="queue-item-artist">Click to play</div>
