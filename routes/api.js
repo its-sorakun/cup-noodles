@@ -83,16 +83,6 @@ router.get("/libraries/:name", async (req, res) => {
       return res.status(404).json({ error: `Library "${req.params.name}" not found` });
     }
 
-    if (library.type === "video") {
-      const metadataService = require("../services/metadata");
-      library.files = await Promise.all(library.files.map(async (file) => {
-        const meta = await metadataService.getMetadata(file.name);
-        if (meta) {
-          file.metadata = meta;
-        }
-        return file;
-      }));
-    }
 
     res.json(library);
   } catch (err) {
@@ -112,6 +102,23 @@ router.get("/metadata/search", async (req, res) => {
     res.status(500).json({ error: "Search failed", details: err.message });
   }
 });
+
+// Fetch metadata for a single file (used for lazy loading)
+router.get("/metadata/info", async (req, res) => {
+  try {
+    const { filename } = req.query;
+    console.log(`[api] /metadata/info requested for: "${filename}"`);
+    if (!filename) return res.status(400).json({ error: "Filename is required" });
+    const metadataService = require("../services/metadata");
+    const meta = await metadataService.getMetadata(filename);
+    console.log(`[api] /metadata/info result for "${filename}": ${meta ? 'FOUND' : 'NULL'}`);
+    res.json({ metadata: meta });
+  } catch (err) {
+    console.error(`[api] /metadata/info error for "${req.query.filename}":`, err);
+    res.status(500).json({ error: "Failed to fetch metadata", details: err.message });
+  }
+});
+
 
 // Override metadata with a specific TMDB ID
 router.post("/metadata/match", async (req, res) => {
