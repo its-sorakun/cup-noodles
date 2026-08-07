@@ -504,12 +504,12 @@
         toggleFullscreen();
       });
 
-      // Auto-start at 720p by default
+      // Auto-start at Direct Source by default
       setTimeout(() => {
-        const btn720 = overlay.querySelector('[data-quality="720p"]');
-        if (btn720) {
-          btn720.style.opacity = "1";
-          startTranscodeAndPlay(library, file, "720p");
+        const btnDirect = overlay.querySelector('[data-quality="direct"]');
+        if (btnDirect) {
+          btnDirect.style.opacity = "1";
+          startTranscodeAndPlay(library, file, "direct");
         }
       }, 100);
     }
