@@ -7,30 +7,72 @@
 *A self-hosted entertainment sanctuary crafted to showcase and enjoy your movies, anime catalogs, audio collections, and high-resolution wallpaper archives.*
 <br/>
 
-<div align="center">
-  <img src="https://imgh.in/host/xwxppp" alt="Cup Noodles Lockscreen" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
-  <br /><br />
-  <img src="https://imgh.in/host/vopdpu" alt="Cup Noodles Homepage" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
-</div>
-</div>
+## 🌌 What is Cup Noodles?
 
-## 🌌 Why Cup Noodles?
+**Cup Noodles** is an elegant, self-hosted media server designed to bring your personal libraries to life. Instead of leaving your movies, anime, music, and wallpapers buried in cluttered system folders, Cup Noodles transforms them into a premium, immersive streaming platform.
 
-Your digital collection shouldn't stay buried inside cluttered system folders. **Cup Noodles** transforms your personal libraries into an immersive, private sanctuary built around instant access, seamless organization, and pure visual aesthetic. 
+By simply launching the app on your PC, you instantly spin up a powerful private backend that serves as the central hub for your digital universe. 
 
-Whether you are curating vast anime seasons, admiring high-resolution digital artwork, or relaxing with an evening film, your entire universe of comfort media is always just one click away. Welcome home. *(Okaeri, Senpai!)*
+Best of all, **your collection travels with you around the house.** Once the vault is running, you can grab your phone, tablet, or laptop, type your PC's local IP address into any web browser, and immediately start streaming your media over your local network—complete with server-side transcoding for buttery-smooth playback on any device. 
 
 ---
 
 ## ✨ What's Inside the Bowl
 
 - 🎬 **Instant Cinema & Anime** — Jump right into your favorite movies and episodes with zero loading friction or unnecessary setup complexity.
+- 🎞️ **Automatic TMDB Metadata** — Movies and TV shows automatically pull gorgeous posters, cast details, synopses, and ratings from The Movie Database (TMDB). Missed a match? Use the built-in "Fix Match" dialog to manually link your files!
 - 🖼️ **Immersive Art Galleries** — Glide through massive wallpaper and digital image archives with swift keyboard shortcuts and clean edge-to-edge viewing.
-- 🎵 **Soundtrack Discovery** — Keep your favorite soundtracks, OSTs, and audio albums organized and ready to play in the background.
+- 🎵 **Audiophile Music Experience** — A stunning, fully-featured music player designed with a premium modern aesthetic.
+  - **Dynamic Squircle Grid:** Browse your library with massive, perfectly rounded album arts automatically extracted from your audio files.
+  - **Premium Mini Player:** Minimize your music to a sleek, frosted-glass mini player that dynamically blurs the currently playing album art as its backdrop.
+  - **Live Lyrics & Queue Management:** Fetch lyrics on the fly from the web, and manage your continuous playback queue effortlessly.
+  - **Lossless FLAC Support:** Full support for high-fidelity `.flac` playback, alongside `.mp3`, `.wav`, and more, complete with technical bit-depth and codec readouts.
 - ⚡ **Lightning-Fast Discovery** — Search, filter, and surface exactly what you're craving across thousands of items in real-time.
 - 🌓 **Dynamic Day & Night Atmospheres** — Seamlessly shift between deep nighttime tranquility and bright daytime vibrancy to match your personal routine and surroundings.
 - 📁 **Effortless Library Connect** — Point straight to your existing media folders in seconds without dealing with complex database setups or rigid library migrations.
 - 📱 **Mobile Streaming with Server-Side Transcoding** — Your PC does all the heavy lifting. Stream 4K content to your phone at any quality without taxing the device.
+
+---
+
+## 📸 Interface Showcase
+
+<div align="center">
+
+  ### 🔒 Lockscreen
+  <!-- 
+    TODO: Add Lockscreen Screenshot here 
+  -->
+  <img src="https://imgh.in/host/0lokv4" alt="Lockscreen Screenshot Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+  
+  <br /><br /><br />
+
+  ### 🏠 Homescreen
+  <img src="https://imgh.in/host/c4dbw5" alt="Homescreen Screenshot Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+  
+  <br /><br /><br />
+  
+  ### 🎬 Movies & TV Shows
+  <img src="https://imgh.in/host/4prh9j" alt="Movies Screenshot 1 Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); margin-bottom: 20px;">
+  <img src="https://imgh.in/host/krprw9" alt="Movies Screenshot 2 Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+  
+  <br /><br /><br />
+  
+  ### 🎵 Music Player
+  <img src="https://imgh.in/host/axprt3" alt="Music Screenshot 1 Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); margin-bottom: 20px;">
+  <img src="https://imgh.in/host/5zwfen" alt="Music Screenshot 2 Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+  
+  <br /><br /><br />
+  
+  ### 🖼️ Wallpapers & Galleries
+  <img src="https://imgh.in/host/hlxx5c" alt="Wallpapers Screenshot Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); margin-bottom: 20px;">
+  <img src="https://imgh.in/host/np6m0s" alt="Wallpapers Screenshot Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); margin-bottom: 20px;">
+
+  <br /><br /><br />
+  
+  ### ⚙️ Settings
+  <img src="https://imgh.in/host/h2tv34" alt="Settings Screenshot Placeholder" width="90%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+
+</div>
 
 ---
 
@@ -89,7 +131,14 @@ When you open a video, simply pick your desired quality from the player controls
 
 ---
 
-## 🛠️ For Developers
+## 🛠️ For Developers and tech enthusiasts
+
+Cup Noodles consists of:
+
+- Electron desktop application
+- Express.js backend
+- FFmpeg transcoding engine
+- Browser-based frontend
 
 Want to build Cup Noodles from source or run it as a headless web server?
 
@@ -108,9 +157,20 @@ npm run electron:build
 npm run start
 ```
 
+---
+
+## ❤️ Acknowledgements
+
+Movie and TV metadata provided by TMDB.
+
+This product uses the TMDB API but is not endorsed or certified by TMDB.
+
+---
+
 <div align="center">
 
-*Crafted for late-night binging, curated aesthetics, and personal media enthusiasts.* 🥢<br>
-**Enjoy your digital sanctuary.**
+Made with ☕, 🍜 and countless late-night coding sessions.
+
+If you enjoy Cup Noodles, consider leaving a ⭐ on the repository.
 
 </div>
