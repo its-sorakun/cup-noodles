@@ -36,31 +36,66 @@ Whether you are curating vast anime seasons, admiring high-resolution digital ar
 
 ## 🚀 Ready to Serve?
 
-Cup Noodles is designed to be as simple as possible. No complicated databases, no command line, no developer tools required.
+Get your personal streaming sanctuary hot and ready in less than two minutes:
 
-### 1. Download the App
-Head over to the [Releases](https://github.com/its-sorakun/cup-noodles/releases) page and download the latest `Cup-Noodles.Setup.exe ` file for Windows.
+### 1. Grab the Bowl
+```bash
+git clone https://github.com/its-sorakun/cup-noodles.git
+cd cup-noodles
+```
 
-### 2. Install and Launch
-Double-click the installer to install Cup Noodles on your PC. Once installed, the app will launch automatically.
+### 2. Prepare the Ingredients
+```bash
+npm install
+```
 
-*(Note: FFmpeg is already bundled inside the app for hardware-accelerated video transcoding to your mobile devices — zero setup required!)*
+### 2.5. Add FFmpeg *(optional — for mobile transcoding)*
 
-### 3. Dig In!
-Upon launching, you will be met with the Vault Lockscreen. Simply log in with the default credentials and start adding your media folders!
+FFmpeg is required to stream videos to your phone at lower quality. Skip this step if you only plan to watch on the same device running the server.
+
+**Windows** — download from [ffmpeg.org/download](https://ffmpeg.org/download.html), extract, and add the `bin` folder to your system PATH. Alternatively you can use chocolatey package manager to install FFmpeg by running the following command in your terminal:
+```bash
+choco install ffmpeg
+```
+
+**macOS**
+```bash
+brew install ffmpeg
+```
+
+**Linux (Debian/Ubuntu)**
+```bash
+sudo apt install ffmpeg
+```
+
+Verify it works:
+```bash
+ffmpeg -version
+```
+
+> ⚠️ Make sure to **open a fresh terminal** after adding FFmpeg to your PATH, then restart the server — otherwise Node.js won't detect it.
+
+### 3. Let it Cook
+```bash
+node server.js
+```
+
+Once boiling, open your favorite web browser and dig in at **`http://localhost:1337`**! *(By default, you will be met with the Vault Lockscreen)*
 
 ---
 
 ## 🔒 Securing Your Vault
 
-By default, Cup Noodles is completely locked down to ensure your personal media stays private. A default `auth.json` file will be automatically generated the very first time you start the app.
+By default, Cup Noodles is completely locked down to ensure your personal media stays private. A default `auth.json` file will be automatically generated the very first time you start the server.
 
 The default login credentials are:
 - **Username:** `admin`
 - **Password:** `admin`
 
 **To change your credentials:**
-Simply log in with the default credentials, open the **Settings** page from the top-right menu, and use the **Account & Security** section to securely update your username and password directly within the app!
+1. Open the newly generated `auth.json` file in your Cup Noodles folder.
+2. Change the `"username"` and `"password"` values to your preferred secure credentials.
+3. Restart the server (press `Ctrl+C` in your terminal, then run `node server.js` again) for the changes to take effect.
 
 ---
 
@@ -85,28 +120,8 @@ When you open a video, simply pick your desired quality from the player controls
 1. Open **Cup Noodles** in your browser and click over to **Settings**.
 2. Paste in the folder paths where your favorite Movies, Anime, Wallpapers, or Audio albums live and hit **Save**.
 3. Return to **Home**, pick your flavor, and enjoy the show!
+
 <br />
-
----
-
-## 🛠️ For Developers
-
-Want to build Cup Noodles from source or run it as a headless web server?
-
-```bash
-git clone https://github.com/its-sorakun/cup-noodles.git
-cd cup-noodles
-npm install
-
-# Run Desktop App in Dev Mode
-npm run electron:dev
-
-# Build Windows Installer
-npm run electron:build
-
-# Run Headless Web Server
-npm run start
-```
 
 <div align="center">
 
