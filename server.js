@@ -8,6 +8,7 @@ const crypto = require("node:crypto");
 // Import modularized middlewares and routes
 const apiRoutes = require("./routes/api");
 const transcodeRoutes = require("./routes/transcode");
+const mediaInfoRoutes = require("./routes/mediaInfo");
 
 const paths = require("./services/paths");
 
@@ -102,6 +103,7 @@ app.post("/api/auth/update", (req, res) => {
 
 // Mount API routes
 app.use("/api/transcode", transcodeRoutes);
+app.use("/api/media-info", mediaInfoRoutes);
 app.use("/api", apiRoutes);
 
 // ---------------------------------------------------------------------------

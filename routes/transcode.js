@@ -12,7 +12,7 @@ const router = express.Router();
 // POST /api/transcode/session — register a file for transcoding, returns sessionId
 router.post("/session", async (req, res) => {
   try {
-    const { libraryName, relativePath, quality = "720p", startTime = 0 } = req.body;
+    const { libraryName, relativePath, quality = "720p", startTime = 0, audioTrackIndex = null } = req.body;
     if (!libraryName || !relativePath) {
       return res.status(400).json({ error: "libraryName and relativePath are required" });
     }
@@ -53,7 +53,7 @@ router.post("/session", async (req, res) => {
     }
 
     // Start FFmpeg via service
-    const { preset } = startTranscodeProcess(sessionId, sessionDir, filePath, playlistPath, quality, startTime);
+    const { preset } = startTranscodeProcess(sessionId, sessionDir, filePath, playlistPath, quality, startTime, audioTrackIndex);
 
     res.json({ sessionId, quality, preset, duration });
   } catch (err) {

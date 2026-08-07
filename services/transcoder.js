@@ -4,6 +4,7 @@ const { spawn } = require("node:child_process");
 const paths = require("./paths");
 
 const QUALITY_PRESETS = {
+  "remux": { resolution: "original", videoBitrate: "copy", audioBitrate: "copy" },
   "1080p": { resolution: "1920x1080", videoBitrate: "4000k", audioBitrate: "192k" },
   "720p":  { resolution: "1280x720",  videoBitrate: "2500k", audioBitrate: "128k" },
   "480p":  { resolution: "854x480",   videoBitrate: "1000k", audioBitrate: "128k" },
@@ -35,37 +36,56 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
-function startTranscodeProcess(sessionId, sessionDir, filePath, playlistPath, quality, startTime) {
+function startTranscodeProcess(sessionId, sessionDir, filePath, playlistPath, quality, startTime, audioTrackIndex = null) {
   const preset = QUALITY_PRESETS[quality] || QUALITY_PRESETS["720p"];
-  
-  const targetW = parseInt(preset.resolution.split("x")[0]);
-  const targetH = parseInt(preset.resolution.split("x")[1]);
   
   const rawFfmpegPath = require("ffmpeg-static");
   const ffmpegPath = paths.getBinPath(rawFfmpegPath);
+  
   const ffmpegArgs = [
     "-y",
     "-nostats",
     "-loglevel", "warning",
     ...(startTime > 0 ? ["-ss", String(startTime)] : []),
-    "-i", filePath,
-    "-c:v", "h264_nvenc",
-    "-preset", "p4",
-    "-tune", "ll",
-    "-vf", `scale=${targetW}:${targetH}:force_original_aspect_ratio=decrease,pad=${targetW}:${targetH}:(ow-iw)/2:(oh-ih)/2`,
-    "-b:v", preset.videoBitrate,
-    "-maxrate", preset.videoBitrate,
-    "-bufsize", `${parseInt(preset.videoBitrate) * 2}k`,
-    "-c:a", "aac",
-    "-b:a", preset.audioBitrate,
-    "-ac", "2",
+    "-i", filePath
+  ];
+
+  if (audioTrackIndex !== null) {
+    ffmpegArgs.push("-map", "0:v:0", "-map", `0:${audioTrackIndex}`);
+  }
+
+  if (quality === "remux") {
+    ffmpegArgs.push(
+      "-c:v", "copy",
+      "-c:a", "aac",
+      "-b:a", "192k",
+      "-ac", "2"
+    );
+  } else {
+    const targetW = parseInt(preset.resolution.split("x")[0]);
+    const targetH = parseInt(preset.resolution.split("x")[1]);
+    ffmpegArgs.push(
+      "-c:v", "h264_nvenc",
+      "-preset", "p4",
+      "-tune", "ll",
+      "-vf", `scale=${targetW}:${targetH}:force_original_aspect_ratio=decrease,pad=${targetW}:${targetH}:(ow-iw)/2:(oh-ih)/2`,
+      "-b:v", preset.videoBitrate,
+      "-maxrate", preset.videoBitrate,
+      "-bufsize", `${parseInt(preset.videoBitrate) * 2}k`,
+      "-c:a", "aac",
+      "-b:a", preset.audioBitrate,
+      "-ac", "2"
+    );
+  }
+
+  ffmpegArgs.push(
     "-f", "hls",
     "-hls_time", "4",
     "-hls_list_size", "0",
     "-hls_segment_type", "mpegts",
     "-hls_segment_filename", path.join(sessionDir, "seg%05d.ts"),
-    playlistPath,
-  ];
+    playlistPath
+  );
 
   console.log(`[transcode] Starting session ${sessionId} — quality: ${quality}`);
   console.log(`[transcode] FFmpeg args: ${ffmpegPath} ${ffmpegArgs.join(" ")}`);

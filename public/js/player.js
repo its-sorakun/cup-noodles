@@ -149,7 +149,7 @@
     renderViewer();
   }
 
-  async function startTranscodeAndPlay(library, file, quality, explicitStartTime = null) {
+  async function startTranscodeAndPlay(library, file, quality, explicitStartTime = null, audioTrackIndex = null) {
     const videoEl = document.getElementById("viewer-video");
     const statusEl = document.getElementById("transcode-status");
     const loadingOverlay = document.getElementById("video-loading-overlay");
@@ -203,7 +203,7 @@
       const res = await api.authFetch("/api/transcode/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ libraryName: library.name, relativePath: file.relativePath, quality, startTime: actualTime }),
+        body: JSON.stringify({ libraryName: library.name, relativePath: file.relativePath, quality, startTime: actualTime, audioTrackIndex }),
       });
 
       if (!res.ok) {
@@ -232,6 +232,7 @@
           enableWorker: true,
           lowLatencyMode: false,
           startLevel: -1,
+          autoStartLoad: false, // Don't auto start load (prevents jumping to live edge)
           // Playlist reload tuning for live transcoding
           liveSyncDurationCount: 3,          // stay 3 segments behind live edge
           levelLoadingMaxRetry: 10,          // retry playlist loads
@@ -249,6 +250,7 @@
         hls.attachMedia(videoEl);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           if (statusEl) statusEl.textContent = `Streaming ${quality}`;
+          hls.startLoad(0); // Force load from start of our transcoded buffer
           videoEl.play().catch(() => {});
         });
         let networkRetryCount = 0;
@@ -335,7 +337,19 @@
                 ${["1080p","720p","480p","360p"].map(q => `
                   <button class="quality-option transcode-quality-btn" data-quality="${q}"><span>${q}</span></button>
                 `).join("")}
+                <button class="quality-option transcode-quality-btn" data-quality="remux" title="Remux — copy audio/video without quality loss"><span>Remux</span> <span style="font-size:10px; opacity:0.6;">🔄</span></button>
                 <button class="quality-option transcode-quality-btn" data-quality="direct" title="Direct stream — no transcoding, browser decodes"><span>Direct</span> <span style="font-size:10px; opacity:0.6;">⚡</span></button>
+              </div>
+
+              <div id="tracks-popup" style="position:absolute; bottom:90px; right:60px; background:rgba(20,20,20,0.95); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:15px; display:none; flex-direction:row; gap:20px; z-index:50; min-width: 250px; max-height: 300px; overflow-y: auto; box-shadow:0 10px 40px rgba(0,0,0,0.8); transform: translateY(10px); opacity: 0; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);">
+                <div id="audio-tracks-container" style="flex:1; display:flex; flex-direction:column; gap:4px;">
+                  <span style="font-size:11px; color:rgba(255,255,255,0.5); font-family:monospace; margin-bottom:8px; display:block;">Audio Tracks</span>
+                  <div id="audio-tracks-list" style="display:flex; flex-direction:column; gap:4px;"></div>
+                </div>
+                <div id="subtitle-tracks-container" style="flex:1; display:flex; flex-direction:column; gap:4px;">
+                  <span style="font-size:11px; color:rgba(255,255,255,0.5); font-family:monospace; margin-bottom:8px; display:block;">Subtitles</span>
+                  <div id="subtitle-tracks-list" style="display:flex; flex-direction:column; gap:4px;"></div>
+                </div>
               </div>
               
               <div id="video-controls-wrapper" style="position:absolute; bottom:0; left:0; width:100%; padding: 40px 0 0 0; background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.4) 50%, transparent); display:flex; flex-direction:column; justify-content:flex-end; z-index:20;">
@@ -346,6 +360,7 @@
                     <span id="time-display" style="color:white; font-size:13px; font-weight:600; font-family:monospace; min-width:90px; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">0:00 / 0:00</span>
                   </div>
                   <div style="display:flex; align-items:center; gap:16px;">
+                    <button id="tracks-btn" class="hover:scale-110 transition-all text-white" style="cursor:pointer; display:none; align-items:center; justify-content:center;">${ICONS.subtitles}</button>
                     <button id="settings-btn" class="hover:scale-110 transition-all text-white" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">${ICONS.settings}</button>
                     <button id="fullscreen-btn" class="hover:scale-110 transition-all text-white" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">${ICONS.maximize}</button>
                   </div>
@@ -411,12 +426,112 @@
       }
 
       // Settings popup toggle
+      const tracksPopup = document.getElementById("tracks-popup");
+      const tracksBtn = document.getElementById("tracks-btn");
+
       if (settingsBtn && popup) {
         settingsBtn.addEventListener("click", (e) => {
           e.stopPropagation();
           popup.classList.toggle("show");
+          if (tracksPopup) {
+            tracksPopup.style.opacity = "0";
+            setTimeout(() => tracksPopup.style.display = "none", 200);
+          }
         });
       }
+
+      if (tracksBtn && tracksPopup) {
+        tracksBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (popup) popup.classList.remove("show");
+          if (tracksPopup.style.display === "flex") {
+            tracksPopup.style.opacity = "0";
+            setTimeout(() => tracksPopup.style.display = "none", 200);
+          } else {
+            tracksPopup.style.display = "flex";
+            void tracksPopup.offsetWidth; // trigger reflow
+            tracksPopup.style.opacity = "1";
+            tracksPopup.style.transform = "translateY(0)";
+          }
+        });
+      }
+
+      // Fetch tracks info
+      api.authFetch(`/api/media-info/${library.name}/${file.relativePath}`)
+        .then(res => res.json())
+        .then(data => {
+          if ((data.audio && data.audio.length > 0) || (data.subtitles && data.subtitles.length > 0)) {
+            if (tracksBtn) tracksBtn.style.display = "flex";
+            
+            const audioList = document.getElementById("audio-tracks-list");
+            const subList = document.getElementById("subtitle-tracks-list");
+            
+            if (data.audio && data.audio.length > 0) {
+              audioList.innerHTML = data.audio.map((a, i) => `
+                <button class="quality-option track-audio-btn ${i===0?'active':''}" data-index="${a.index}" style="justify-content:flex-start; font-size:12px; padding:6px 10px;">
+                  <span style="font-weight:${i===0?'bold':'normal'}">${a.language.toUpperCase()} - ${a.title}</span>
+                </button>
+              `).join("");
+            } else {
+              audioList.innerHTML = `<span style="font-size:12px; color:rgba(255,255,255,0.4);">No additional tracks</span>`;
+            }
+
+            if (data.subtitles && data.subtitles.length > 0) {
+              subList.innerHTML = `
+                <button class="quality-option track-sub-btn active" data-index="off" style="justify-content:flex-start; font-size:12px; padding:6px 10px;">
+                  <span>Off</span>
+                </button>
+              ` + data.subtitles.map(s => `
+                <button class="quality-option track-sub-btn" data-index="${s.index}" style="justify-content:flex-start; font-size:12px; padding:6px 10px;">
+                  <span>${s.language.toUpperCase()} - ${s.title}</span>
+                </button>
+              `).join("");
+            } else {
+              subList.innerHTML = `<span style="font-size:12px; color:rgba(255,255,255,0.4);">No subtitles</span>`;
+            }
+
+            // Audio track selection
+            overlay.querySelectorAll(".track-audio-btn").forEach(btn => {
+              btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                overlay.querySelectorAll(".track-audio-btn").forEach(b => {
+                  b.classList.remove("active");
+                  b.querySelector("span").style.fontWeight = "normal";
+                });
+                btn.classList.add("active");
+                btn.querySelector("span").style.fontWeight = "bold";
+                if (tracksPopup) tracksPopup.style.opacity = "0";
+                
+                let qual = currentQuality === "direct" ? "remux" : currentQuality;
+                startTranscodeAndPlay(library, file, qual, null, btn.dataset.index);
+              });
+            });
+
+            // Subtitle track selection
+            overlay.querySelectorAll(".track-sub-btn").forEach(btn => {
+              btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                overlay.querySelectorAll(".track-sub-btn").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                if (tracksPopup) tracksPopup.style.opacity = "0";
+                
+                const idx = btn.dataset.index;
+                videoEl.querySelectorAll("track").forEach(t => t.remove());
+                
+                if (idx !== "off") {
+                  const trackEl = document.createElement("track");
+                  trackEl.kind = "subtitles";
+                  trackEl.label = "Subtitle";
+                  trackEl.srclang = "en";
+                  const token = localStorage.getItem("jwt_token") || "";
+                  trackEl.src = `/api/subtitles/${library.name}/${file.relativePath}?track=${idx}&token=${token}`;
+                  trackEl.default = true;
+                  videoEl.appendChild(trackEl);
+                }
+              });
+            });
+          }
+        }).catch(err => console.error("Failed to fetch media info", err));
 
       playBtn.addEventListener("click", (e) => {
         e.stopPropagation();

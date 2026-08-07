@@ -234,6 +234,58 @@ router.get("/stream/:libraryName/{*filePath}", async (req, res) => {
   }
 });
 
+// Extract and serve subtitle as WebVTT
+router.get("/subtitles/:libraryName/{*filePath}", async (req, res) => {
+  try {
+    const trackIndex = req.query.track || "0";
+    const config = await loadConfig();
+    const lib = config.libraries.find(
+      (l) => l.name.toLowerCase() === req.params.libraryName.toLowerCase()
+    );
+
+    if (!lib || !lib.path) {
+      return res.status(404).json({ error: "Library not found or not configured" });
+    }
+
+    const relativePath = Array.isArray(req.params.filePath)
+      ? req.params.filePath.join("/")
+      : req.params.filePath;
+    const filePath = path.join(lib.path, relativePath);
+    const resolved = path.resolve(filePath);
+
+    try {
+      await fsPromises.access(resolved);
+    } catch {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    const rawFfmpegPath = require("ffmpeg-static");
+    const ffmpegPath = paths.getBinPath(rawFfmpegPath);
+
+    const args = [
+      "-i", resolved,
+      "-map", `0:${trackIndex}`,
+      "-f", "webvtt",
+      "pipe:1"
+    ];
+
+    res.setHeader("Content-Type", "text/vtt; charset=utf-8");
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    
+    const { spawn } = require("node:child_process");
+    const ffmpeg = spawn(ffmpegPath, args);
+    ffmpeg.stdout.pipe(res);
+    
+    ffmpeg.on("error", (err) => {
+      if (!res.headersSent) {
+        res.status(500).end();
+      }
+    });
+  } catch (err) {
+    if (!res.headersSent) res.status(500).json({ error: "Subtitle extraction error", details: err.message });
+  }
+});
+
 // Thumbnail endpoint
 router.get("/thumbnail/:libraryName/{*filePath}", async (req, res) => {
   try {
