@@ -84,9 +84,54 @@ router.get("/libraries/:name", async (req, res) => {
     if (!library) {
       return res.status(404).json({ error: `Library "${req.params.name}" not found` });
     }
+
+
     res.json(library);
   } catch (err) {
     res.status(500).json({ error: "Failed to scan library", details: err.message });
+  }
+});
+
+// Search TMDB for manual matches
+router.get("/metadata/search", async (req, res) => {
+  try {
+    const { query, year } = req.query;
+    if (!query) return res.status(400).json({ error: "Query is required" });
+    const metadataService = require("../services/metadata");
+    const results = await metadataService.searchTMDBList(query, year || null);
+    res.json({ results });
+  } catch (err) {
+    res.status(500).json({ error: "Search failed", details: err.message });
+  }
+});
+
+// Fetch metadata for a single file (used for lazy loading)
+router.get("/metadata/info", async (req, res) => {
+  try {
+    const { filename } = req.query;
+    console.log(`[api] /metadata/info requested for: "${filename}"`);
+    if (!filename) return res.status(400).json({ error: "Filename is required" });
+    const metadataService = require("../services/metadata");
+    const meta = await metadataService.getMetadata(filename);
+    console.log(`[api] /metadata/info result for "${filename}": ${meta ? 'FOUND' : 'NULL'}`);
+    res.json({ metadata: meta });
+  } catch (err) {
+    console.error(`[api] /metadata/info error for "${req.query.filename}":`, err);
+    res.status(500).json({ error: "Failed to fetch metadata", details: err.message });
+  }
+});
+
+
+// Override metadata with a specific TMDB ID
+router.post("/metadata/match", async (req, res) => {
+  try {
+    const { filename, tmdbId, type } = req.body;
+    if (!filename || !tmdbId || !type) return res.status(400).json({ error: "Missing parameters" });
+    const metadataService = require("../services/metadata");
+    const meta = await metadataService.setMetadataOverride(filename, tmdbId, type);
+    res.json({ success: true, metadata: meta });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to override metadata", details: err.message });
   }
 });
 
@@ -247,7 +292,7 @@ router.get("/thumbnail/:libraryName/{*filePath}", async (req, res) => {
           .resize(width, null, { fit: "inside", withoutEnlargement: true })
           .jpeg({ quality: 80 })
           .toBuffer();
-        
+
         await fsPromises.writeFile(cachePath, thumbnail);
         thumbnailMap.set(cacheKey, true);
 

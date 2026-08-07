@@ -296,7 +296,7 @@ function renderLibraryContent(library, subpath = "") {
           ${directFiles.length > 0 ? `
             ${folders.length > 0 ? `<h2 class="text-xs font-bold uppercase tracking-wider mb-3 ml-1" style="color: var(--text-tertiary);">Files</h2>` : ""}
             <div class="${gridClass} stagger-children" id="media-grid">
-              ${isAudio ? renderAudioList(viewLibrary) : directFiles.map((f, i) => renderMediaItem(viewLibrary, f, i)).join("")}
+              ${isAudio ? renderAudioList(viewLibrary, directFiles) : directFiles.map((f) => renderMediaItem(viewLibrary, f, viewLibrary.files.indexOf(f))).join("")}
             </div>
           ` : ""}
         `}
@@ -337,9 +337,119 @@ function renderLibraryContent(library, subpath = "") {
   // Click handlers for media items
   if (!isAudio) {
     attachMediaClickHandlers(viewLibrary);
+    attachLazyMetadataObserver(viewLibrary);
   } else {
     attachAudioClickHandlers(viewLibrary);
   }
+}
+
+// -----------------------------------------------------------------------
+// Lazy Loading Metadata Observer
+// -----------------------------------------------------------------------
+function attachLazyMetadataObserver(library) {
+  const observer = new IntersectionObserver(async (entries, obs) => {
+    for (let entry of entries) {
+      if (entry.isIntersecting) {
+        const el = entry.target;
+        obs.unobserve(el);
+        el.classList.remove('lazy-meta');
+
+        const filename = el.dataset.filename;
+        const index = el.dataset.index;
+
+        try {
+          const res = await api.authFetch(`/api/metadata/info?filename=${encodeURIComponent(filename)}`);
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+          const data = await res.json();
+          if (data.metadata) {
+            updateMediaCard(el, library, filename, index, data.metadata);
+          } else {
+            // No metadata found: gracefully fallback to standard media-item UI
+            const file = library.files[index];
+            el.outerHTML = renderMediaItemFallback(library, file, index);
+            // Re-attach click listener because outerHTML destroys it
+            const newEl = document.getElementById(`media-item-${index}`);
+            if (newEl) newEl.addEventListener("click", () => openMediaViewer(library, parseInt(index, 10)));
+          }
+        } catch (e) {
+          console.error("Lazy load error", e);
+          el.innerHTML = `<div style="background:red;color:white;padding:10px;font-size:12px;z-index:9999;position:absolute;inset:0;">ERROR: ${e.message}</div>`;
+        }
+      }
+    }
+  }, { rootMargin: '100px' });
+
+  document.querySelectorAll('.lazy-meta').forEach(el => observer.observe(el));
+}
+
+function updateMediaCard(el, library, filename, index, meta) {
+  const poster = meta.posterUrl || el.querySelector('img').src;
+  const rating = meta.rating ? `<div class="badge-rating">⭐ ${meta.rating}</div>` : "";
+  const year = meta.releaseYear ? `<div class="badge-year">${meta.releaseYear}</div>` : "";
+
+  el.innerHTML = `
+        <img class="${meta.posterUrl ? 'media-card-poster' : 'media-card-thumbnail'}" src="${poster}" alt="${escapeHtml(meta.title)}" loading="lazy">
+        <button class="btn-fix-match" onclick="event.stopPropagation(); window.openFixMatchDialog('${escapeHtml(filename).replace(/'/g, "\\'")}')">Fix Match</button>
+        <div class="media-card-overlay">
+          <div class="media-card-badges">${rating}${year}</div>
+          <div class="media-card-title">${escapeHtml(meta.title)}</div>
+          <div class="media-card-desc">${escapeHtml(meta.overview || "No description available.")}</div>
+        </div>
+    `;
+
+  // Replace the default click handler with the Details UI
+  // We clone to strip old event listeners attached by attachMediaClickHandlers
+  const newEl = el.cloneNode(true);
+  el.parentNode.replaceChild(newEl, el);
+  newEl.addEventListener("click", () => openMediaDetails(library, parseInt(index, 10), filename, meta));
+}
+
+// -----------------------------------------------------------------------
+// Media Details UI
+// -----------------------------------------------------------------------
+function openMediaDetails(library, index, filename, meta) {
+  const file = library.files[index];
+  const thumbUrl = api.thumbnailUrl(library.name, file.relativePath, 500);
+  const posterUrl = meta.posterUrl || thumbUrl;
+
+  const html = `
+    <div id="media-details-view" style="position:fixed; inset:0; z-index:9000; background:var(--bg-primary); display:flex; flex-direction:column;">
+      <div class="backdrop-background" style="position:absolute; inset:0; background-image:url('${meta.backdropUrl || posterUrl}'); background-size:cover; background-position:center; filter:blur(20px) brightness(0.3); z-index:0;"></div>
+      
+      <div style="position:relative; z-index:1; padding:20px; display:flex; gap:20px;">
+        <button onclick="document.getElementById('media-details-view').remove()" style="background:transparent; border:none; color:white; font-size:1.5rem; cursor:pointer;">${ICONS.back || '←'}</button>
+      </div>
+
+      <div style="position:relative; z-index:1; flex:1; display:flex; gap:40px; padding: 40px 10%; align-items:center;">
+        <img src="${posterUrl}" style="width:300px; border-radius:12px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+        
+        <div style="flex:1;">
+          <h1 style="font-size:3rem; font-weight:800; margin-bottom:10px; line-height:1.1;">${escapeHtml(meta.title)}</h1>
+          
+          <div style="display:flex; gap:15px; margin-bottom:20px; align-items:center;">
+            ${meta.rating ? `<div class="badge-rating" style="font-size:1rem; padding:4px 10px;">⭐ ${meta.rating}</div>` : ''}
+            ${meta.releaseYear ? `<div class="badge-year" style="font-size:1rem; padding:4px 10px;">${meta.releaseYear}</div>` : ''}
+          </div>
+          
+          <p style="font-size:1.1rem; line-height:1.6; color:rgba(255,255,255,0.8); margin-bottom:40px;">
+            ${escapeHtml(meta.overview || "No description available.")}
+          </p>
+          
+          <div style="display:flex; gap:20px;">
+            <button id="details-play-btn" class="btn btn-primary" style="padding: 15px 40px; font-size:1.2rem;">▶ Play</button>
+            <button onclick="window.openFixMatchDialog('${escapeHtml(filename).replace(/'/g, "\\'")}')" class="btn btn-secondary" style="padding: 15px 30px;">Fix Match</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', html);
+
+  document.getElementById('details-play-btn').addEventListener('click', () => {
+    document.getElementById('media-details-view').remove();
+    openMediaViewer(library, index);
+  });
 }
 
 function renderFolderCard(library, folder, index) {
@@ -364,8 +474,26 @@ function renderFolderCard(library, folder, index) {
 function renderMediaItem(library, file, index) {
   const isImage = file.type === "image";
   const isVideo = file.type === "video";
-  const thumbUrl = (isImage || isVideo) ? api.thumbnailUrl(library.name, file.relativePath, 500) : "";
+  if (isVideo) {
+    const thumbUrl = api.thumbnailUrl(library.name, file.relativePath, 500);
+    const nameNoExt = file.name.replace(/\.[^.]+$/, "");
+    return `
+      <div class="media-card lazy-meta" data-index="${index}" data-filename="${escapeHtml(file.name).replace(/"/g, "&quot;")}" id="media-item-${index}">
+        <img class="media-card-thumbnail" src="${thumbUrl}" alt="${escapeHtml(file.name)}" loading="lazy">
+        <div class="media-card-overlay">
+          <div class="media-card-title">${escapeHtml(nameNoExt)}</div>
+          <div class="media-card-desc" style="color: var(--text-tertiary);">Loading details...</div>
+        </div>
+      </div>
+    `;
+  }
+  return renderMediaItemFallback(library, file, index);
+}
 
+function renderMediaItemFallback(library, file, index) {
+  const isImage = file.type === "image";
+  const isVideo = file.type === "video";
+  const thumbUrl = (isImage || isVideo) ? api.thumbnailUrl(library.name, file.relativePath, 500) : "";
   const nameNoExt = file.name.replace(/\.[^.]+$/, "");
   const ext = getFileExtension(file.name);
 
@@ -394,10 +522,11 @@ function renderMediaItem(library, file, index) {
           </div>
         `}
         ${isVideo ? `
-          <div class="media-item__overlay" style="z-index: 5;">
+          <div class="media-item__overlay flex-col gap-2" style="z-index: 5; flex-direction: column;">
             <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: rgba(139, 92, 246, 0.7); backdrop-filter: blur(6px);">
               ${ICONS.play}
             </div>
+            <button class="btn btn-secondary" onclick="event.stopPropagation(); window.openFixMatchDialog('${escapeHtml(file.name).replace(/'/g, "\\'")}')" style="padding: 6px 12px; font-size: 0.75rem; border-radius: 12px; backdrop-filter: blur(4px); background: rgba(0,0,0,0.6); color: white; border: 1px solid rgba(255,255,255,0.2);">Fix Match</button>
           </div>
         ` : ""}
         <div class="media-item__info">
