@@ -364,6 +364,26 @@ function renderFolderCard(library, folder, index) {
 function renderMediaItem(library, file, index) {
   const isImage = file.type === "image";
   const isVideo = file.type === "video";
+  const meta = file.metadata;
+
+  if (isVideo && meta) {
+    const poster = meta.posterUrl || api.thumbnailUrl(library.name, file.relativePath, 500);
+    const rating = meta.rating ? `<div class="badge-rating">⭐ ${meta.rating}</div>` : "";
+    const year = meta.releaseYear ? `<div class="badge-year">${meta.releaseYear}</div>` : "";
+    
+    return `
+      <div class="media-card" data-index="${index}" data-name="${escapeHtml(file.name.toLowerCase())}" id="media-item-${index}">
+        <img class="${meta.posterUrl ? 'media-card-poster' : 'media-card-thumbnail'}" src="${poster}" alt="${escapeHtml(meta.title)}" loading="lazy">
+        <button class="btn-fix-match" onclick="event.stopPropagation(); window.openFixMatchDialog('${escapeHtml(file.name).replace(/'/g, "\\'")}')">Fix Match</button>
+        <div class="media-card-overlay">
+          <div class="media-card-badges">${rating}${year}</div>
+          <div class="media-card-title">${escapeHtml(meta.title)}</div>
+          <div class="media-card-desc">${escapeHtml(meta.overview || "No description available.")}</div>
+        </div>
+      </div>
+    `;
+  }
+
   const thumbUrl = (isImage || isVideo) ? api.thumbnailUrl(library.name, file.relativePath, 500) : "";
 
   const nameNoExt = file.name.replace(/\.[^.]+$/, "");
@@ -458,7 +478,7 @@ function filterMediaGrid(library) {
 // Click handlers — open media viewer
 // -----------------------------------------------------------------------
 function attachMediaClickHandlers(library) {
-  document.querySelectorAll(".media-item").forEach((item) => {
+  document.querySelectorAll(".media-item, .media-card").forEach((item) => {
     item.addEventListener("click", () => {
       const index = parseInt(item.dataset.index, 10);
       openMediaViewer(library, index);
@@ -469,10 +489,99 @@ function attachMediaClickHandlers(library) {
 function attachAudioClickHandlers(library) {
   document.querySelectorAll(".audio-item").forEach((item) => {
     item.addEventListener("click", () => {
+      document.querySelectorAll(".audio-item").forEach(el => el.classList.remove("active"));
+      item.classList.add("active");
       const index = parseInt(item.dataset.index, 10);
       playAudio(library, index);
     });
   });
 }
+
+// -----------------------------------------------------------------------
+// Fix Match Dialog Logic
+// -----------------------------------------------------------------------
+document.addEventListener("DOMContentLoaded", () => {
+  const dialogHtml = `
+    <div id="metadata-search-dialog">
+      <div class="search-dialog-content">
+        <div class="search-dialog-header">
+          <input type="text" id="metadata-search-input" class="search-dialog-input" placeholder="Search TMDB for movie or TV show...">
+          <button id="metadata-search-btn" class="btn btn-primary" style="padding: 10px 15px;">Search</button>
+          <button id="metadata-search-close" style="background:transparent; border:none; color:white; cursor:pointer;">✖</button>
+        </div>
+        <div class="search-dialog-results" id="metadata-search-results">
+          <div style="text-align:center; padding: 20px; color: var(--text-tertiary);">Search for a title to fix the metadata match.</div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.insertAdjacentHTML("beforeend", dialogHtml);
+
+  const dialog = document.getElementById("metadata-search-dialog");
+  const closeBtn = document.getElementById("metadata-search-close");
+  const searchBtn = document.getElementById("metadata-search-btn");
+  const input = document.getElementById("metadata-search-input");
+  const resultsContainer = document.getElementById("metadata-search-results");
+  let currentTargetFilename = null;
+
+  closeBtn.addEventListener("click", () => {
+    dialog.style.display = "none";
+  });
+
+  dialog.addEventListener("click", (e) => {
+    if (e.target === dialog) dialog.style.display = "none";
+  });
+
+  window.openFixMatchDialog = (filename) => {
+    currentTargetFilename = filename;
+    input.value = filename.replace(/\.[^.]+$/, "");
+    resultsContainer.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-tertiary);">Hit search to find matches for:<br><strong>${escapeHtml(filename)}</strong></div>`;
+    dialog.style.display = "flex";
+  };
+
+  searchBtn.addEventListener("click", async () => {
+    const query = input.value.trim();
+    if (!query) return;
+
+    resultsContainer.innerHTML = `<div style="text-align:center; padding: 20px;">Searching TMDB...</div>`;
+    try {
+      const res = await api.authFetch(`/api/metadata/search?query=${encodeURIComponent(query)}`);
+      if (res.results && res.results.length > 0) {
+        resultsContainer.innerHTML = res.results.map(r => `
+          <div class="search-result-item" onclick="window.applyMetadataOverride('${r.id}', '${r.type}')">
+            ${r.posterUrl ? `<img src="${r.posterUrl}" class="search-result-poster">` : `<div class="search-result-poster"></div>`}
+            <div>
+              <div style="font-weight: bold; margin-bottom: 4px;">${escapeHtml(r.title)} <span style="color:var(--text-tertiary); font-weight:normal;">(${r.releaseYear || '?'})</span></div>
+              <div style="font-size: 0.8rem; color: var(--text-secondary); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${escapeHtml(r.overview || '')}</div>
+            </div>
+          </div>
+        `).join("");
+      } else {
+        resultsContainer.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-tertiary);">No results found.</div>`;
+      }
+    } catch (e) {
+      resultsContainer.innerHTML = `<div style="text-align:center; padding: 20px; color: red;">Error searching TMDB.</div>`;
+    }
+  });
+
+  window.applyMetadataOverride = async (tmdbId, type) => {
+    if (!currentTargetFilename) return;
+    resultsContainer.innerHTML = `<div style="text-align:center; padding: 20px;">Applying fix...</div>`;
+    try {
+      await api.authFetch("/api/metadata/match", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: currentTargetFilename, tmdbId, type })
+      });
+      dialog.style.display = "none";
+      // Refresh library to show new metadata
+      if (state.currentLibrary) {
+        renderLibrary(state.currentLibrary.name);
+      }
+    } catch (e) {
+      resultsContainer.innerHTML = `<div style="text-align:center; padding: 20px; color: red;">Error applying override.</div>`;
+    }
+  };
+});
 
 // -----------------------------------------------------------------------

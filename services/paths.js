@@ -11,6 +11,7 @@ function getPaths() {
       config: path.join(rootDir, "config.json"),
       auth: path.join(rootDir, "auth.json"),
       thumbnails: path.join(rootDir, ".thumbnails"),
+      metadata: path.join(rootDir, "metadata.json"),
       getBinPath: (p) => p
     };
   }
@@ -48,6 +49,7 @@ function getPaths() {
     config: configPath,
     auth: authPath,
     thumbnails: thumbnailsDir,
+    metadata: path.join(userDataDir, "metadata.json"),
     getBinPath: (p) => p.includes("app.asar") ? p.replace("app.asar", "app.asar.unpacked") : p
   };
 }

@@ -82,9 +82,47 @@ router.get("/libraries/:name", async (req, res) => {
     if (!library) {
       return res.status(404).json({ error: `Library "${req.params.name}" not found` });
     }
+
+    if (library.type === "video") {
+      const metadataService = require("../services/metadata");
+      library.files = await Promise.all(library.files.map(async (file) => {
+        const meta = await metadataService.getMetadata(file.name);
+        if (meta) {
+          file.metadata = meta;
+        }
+        return file;
+      }));
+    }
+
     res.json(library);
   } catch (err) {
     res.status(500).json({ error: "Failed to scan library", details: err.message });
+  }
+});
+
+// Search TMDB for manual matches
+router.get("/metadata/search", async (req, res) => {
+  try {
+    const { query, year } = req.query;
+    if (!query) return res.status(400).json({ error: "Query is required" });
+    const metadataService = require("../services/metadata");
+    const results = await metadataService.searchTMDBList(query, year || null);
+    res.json({ results });
+  } catch (err) {
+    res.status(500).json({ error: "Search failed", details: err.message });
+  }
+});
+
+// Override metadata with a specific TMDB ID
+router.post("/metadata/match", async (req, res) => {
+  try {
+    const { filename, tmdbId, type } = req.body;
+    if (!filename || !tmdbId || !type) return res.status(400).json({ error: "Missing parameters" });
+    const metadataService = require("../services/metadata");
+    const meta = await metadataService.setMetadataOverride(filename, tmdbId, type);
+    res.json({ success: true, metadata: meta });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to override metadata", details: err.message });
   }
 });
 
