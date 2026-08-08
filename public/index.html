@@ -35,8 +35,17 @@
           </span>
         </a>
 
+        <!-- Mobile Hamburger Button -->
+        <button id="mobile-menu-btn" class="mobile-menu-toggle flex items-center p-2 rounded-lg border-0 bg-transparent text-white hover:bg-white/10 transition-colors cursor-pointer" aria-label="Toggle Menu">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+
         <!-- Nav Links -->
-        <div class="flex items-center gap-1 sm:gap-2" id="nav-links">
+        <div class="nav-links-container flex items-center gap-1 sm:gap-2" id="nav-links">
           <a href="#/" class="nav-link active" data-route="home" id="nav-home">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round">
@@ -106,6 +115,17 @@
   <script src="/js/music.js?v=27"></script>
   <script src="/js/player.js?v=27"></script>
   <script src="/js/app.js?v=27"></script>
+  <script>
+    document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+      document.getElementById('nav-links').classList.toggle('mobile-menu-active');
+    });
+    // Close menu when clicking a link
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        document.getElementById('nav-links').classList.remove('mobile-menu-active');
+      });
+    });
+  </script>
 </body>
 
 </html>
