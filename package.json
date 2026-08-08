@@ -1,6 +1,6 @@
 {
   "name": "cup-noodles",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "homelab media server — browse & stream your personal media collection",
   "license": "ISC",
   "author": "",
@@ -21,7 +21,7 @@
     },
     "win": {
       "target": "nsis",
-      "icon": "public/favicon.ico"
+      "icon": "public/img/icon.ico"
     },
     "asarUnpack": [
       "node_modules/ffmpeg-static/**/*",
