@@ -122,7 +122,12 @@ router.get("/lyrics", (req, res) => {
   const title = req.query.title;
   if (!artist || !title) return res.status(400).json({ error: "Missing artist/title" });
 
-  const url = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`;
+  // Sanitize the artist name by removing additional band members or featuring artists
+  const cleanArtist = artist.split(/ ・ |、|,| feat\.| ft\./i)[0].trim();
+  const cleanTitle = title.trim();
+  const query = `${cleanTitle} ${cleanArtist}`;
+
+  const url = `https://lrclib.net/api/search?q=${encodeURIComponent(query)}`;
   
   https.get(url, { headers: { 'User-Agent': 'CupNoodlesMediaServer/1.0' } }, (apiRes) => {
     let data = '';
@@ -131,9 +136,9 @@ router.get("/lyrics", (req, res) => {
       if (apiRes.statusCode === 200) {
         try {
           const parsed = JSON.parse(data);
-          // lrclib returns plainLyrics and syncedLyrics
-          if (parsed.plainLyrics) {
-            res.json({ lyrics: parsed.plainLyrics });
+          // lrclib search returns an array of results
+          if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].plainLyrics) {
+            res.json({ lyrics: parsed[0].plainLyrics });
           } else {
             res.status(404).json({ error: "No lyrics found" });
           }
