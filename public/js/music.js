@@ -197,7 +197,7 @@ window.MusicPlayer = {
           const lyricsData = await lyricsRes.json();
           document.getElementById('music-lyrics-text').textContent = lyricsData.lyrics || "No lyrics found.";
         } else {
-          document.getElementById('music-lyrics-text').textContent = "No lyrics found on Lyrics.ovh.";
+          document.getElementById('music-lyrics-text').textContent = "No lyrics found in LRCLIB.";
         }
       } else {
         document.getElementById('music-lyrics-text').textContent = "Missing artist/title for lyrics search.";
