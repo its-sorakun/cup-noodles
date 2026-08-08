@@ -37,7 +37,8 @@
       "public/**/*",
       "config.json",
       "auth.json",
-      "package.json"
+      "package.json",
+      ".env"
     ]
   },
   "keywords": [

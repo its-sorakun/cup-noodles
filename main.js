@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ path: require('path').join(__dirname, '.env') });
 const { app, BrowserWindow, Menu } = require("electron");
 const path = require("path");
 
@@ -45,6 +45,29 @@ async function createWindow() {
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     require("electron").shell.openExternal(url);
     return { action: "deny" };
+  });
+
+  // Fix video fullscreen bug where exiting video fullscreen exits app fullscreen
+  let wasFullScreenBeforeVideo = false;
+  let lastEnterFullScreenTime = 0;
+
+  mainWindow.on('enter-full-screen', () => {
+    lastEnterFullScreenTime = Date.now();
+  });
+
+  mainWindow.webContents.on('enter-html-full-screen', () => {
+    // If enter-full-screen didn't fire in the last 200ms, the app was ALREADY fullscreen!
+    wasFullScreenBeforeVideo = (Date.now() - lastEnterFullScreenTime) > 200;
+  });
+
+  mainWindow.webContents.on('leave-html-full-screen', () => {
+    if (wasFullScreenBeforeVideo) {
+      setTimeout(() => {
+        if (mainWindow && !mainWindow.isFullScreen()) {
+          mainWindow.setFullScreen(true);
+        }
+      }, 50);
+    }
   });
 
   // Load the web app
