@@ -117,41 +117,40 @@ router.get("/cover/:libraryName/{*filePath}", async (req, res) => {
   }
 });
 
-router.get("/lyrics", (req, res) => {
+router.get("/lyrics", async (req, res) => {
   const artist = req.query.artist;
   const title = req.query.title;
   if (!artist || !title) return res.status(400).json({ error: "Missing artist/title" });
 
-  // Sanitize the artist name by removing additional band members or featuring artists
-  const cleanArtist = artist.split(/ ・ |、|,| feat\.| ft\./i)[0].trim();
-  const cleanTitle = title.trim();
-  const query = `${cleanTitle} ${cleanArtist}`;
+  try {
+    // Sanitize the artist name by removing additional band members or featuring artists
+    const cleanArtist = artist.split(/ ・ |、|,| feat\.| ft\./i)[0].trim();
+    const cleanTitle = title.trim();
+    
+    // Attempt 1: Title + Artist
+    let query = `${cleanTitle} ${cleanArtist}`;
+    let url = `https://lrclib.net/api/search?q=${encodeURIComponent(query)}`;
+    let apiRes = await fetch(url, { headers: { 'User-Agent': 'CupNoodlesMediaServer/1.0' } });
+    let data = await apiRes.json();
 
-  const url = `https://lrclib.net/api/search?q=${encodeURIComponent(query)}`;
-  
-  https.get(url, { headers: { 'User-Agent': 'CupNoodlesMediaServer/1.0' } }, (apiRes) => {
-    let data = '';
-    apiRes.on('data', chunk => data += chunk);
-    apiRes.on('end', () => {
-      if (apiRes.statusCode === 200) {
-        try {
-          const parsed = JSON.parse(data);
-          // lrclib search returns an array of results
-          if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].plainLyrics) {
-            res.json({ lyrics: parsed[0].plainLyrics });
-          } else {
-            res.status(404).json({ error: "No lyrics found" });
-          }
-        } catch {
-          res.status(500).json({ error: "Parse error" });
-        }
-      } else {
-        res.status(apiRes.statusCode).json({ error: "Not found" });
-      }
-    });
-  }).on('error', (err) => {
+    if (Array.isArray(data) && data.length > 0 && data[0].plainLyrics) {
+      return res.json({ lyrics: data[0].plainLyrics });
+    }
+
+    // Attempt 2: Fallback to just Title (Handles mismatched metadata like "幾田りら" vs "Lilas")
+    url = `https://lrclib.net/api/search?q=${encodeURIComponent(cleanTitle)}`;
+    apiRes = await fetch(url, { headers: { 'User-Agent': 'CupNoodlesMediaServer/1.0' } });
+    data = await apiRes.json();
+
+    if (Array.isArray(data) && data.length > 0 && data[0].plainLyrics) {
+      return res.json({ lyrics: data[0].plainLyrics });
+    }
+
+    // If both attempts fail
+    res.status(404).json({ error: "No lyrics found" });
+  } catch (err) {
     res.status(500).json({ error: err.message });
-  });
+  }
 });
 
 module.exports = router;
