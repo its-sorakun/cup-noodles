@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"
+    android:background="#070913">
+
+    <!-- Connection Screen -->
+    <LinearLayout
+        android:id="@+id/connectionLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="32dp"
+        android:gravity="center"
+        android:layout_centerInParent="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cup Noodles"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Connect to Server"
+            android:textSize="16sp"
+            android:textColor="#9CA3AF"
+            android:layout_marginBottom="32dp" />
+
+        <EditText
+            android:id="@+id/ipAddressInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="e.g. 192.168.1.100:1337"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#4B5563"
+            android:backgroundTint="#8B5CF6"
+            android:inputType="textUri"
+            android:singleLine="true"
+            android:padding="16dp"
+            android:background="#1F2937"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/connectButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Connect"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#8B5CF6"
+            android:padding="16dp" />
+
+    </LinearLayout>
+
+    <!-- WebView Screen -->
+    <WebView
+        android:id="@+id/webView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+</RelativeLayout>
