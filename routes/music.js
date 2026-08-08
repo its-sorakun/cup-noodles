@@ -122,7 +122,7 @@ router.get("/lyrics", (req, res) => {
   const title = req.query.title;
   if (!artist || !title) return res.status(400).json({ error: "Missing artist/title" });
 
-  const url = `https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`;
+  const url = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`;
   
   https.get(url, { headers: { 'User-Agent': 'CupNoodlesMediaServer/1.0' } }, (apiRes) => {
     let data = '';
@@ -131,7 +131,12 @@ router.get("/lyrics", (req, res) => {
       if (apiRes.statusCode === 200) {
         try {
           const parsed = JSON.parse(data);
-          res.json({ lyrics: parsed.lyrics });
+          // lrclib returns plainLyrics and syncedLyrics
+          if (parsed.plainLyrics) {
+            res.json({ lyrics: parsed.plainLyrics });
+          } else {
+            res.status(404).json({ error: "No lyrics found" });
+          }
         } catch {
           res.status(500).json({ error: "Parse error" });
         }
