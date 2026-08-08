@@ -3,7 +3,7 @@
   "version": "1.1.1",
   "description": "homelab media server — browse & stream your personal media collection",
   "license": "ISC",
-  "author": "",
+  "author": "its-sorakun",
   "type": "commonjs",
   "main": "main.js",
   "scripts": {
