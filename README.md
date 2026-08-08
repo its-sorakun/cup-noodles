@@ -44,7 +44,7 @@ Best of all, **your collection travels with you around the house.** Once the vau
   <br />
 
   ### 🏠 Homescreen
-  <img src="https://wsrv.nl/?url=https://imgh.in/host/c4dbw5&mask=corner&mrad=12" alt="Homescreen Screenshot" width="90%">
+  <img src="https://imgh.in/host/e9fgxm" alt="Homescreen Screenshot" width="90%">
   
   <br />
   
