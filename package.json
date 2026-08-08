@@ -21,7 +21,7 @@
     },
     "win": {
       "target": "nsis",
-      "icon": "public/img/icon.ico"
+      "icon": "public/img/icon.png"
     },
     "asarUnpack": [
       "node_modules/ffmpeg-static/**/*",
