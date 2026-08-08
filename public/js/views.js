@@ -118,15 +118,15 @@ async function renderHome() {
   }
 
   $content.innerHTML = `
-      <div class="fade-in max-w-6xl mx-auto py-4 flex flex-col" style="min-height: calc(100vh - 100px);">
+      <div class="fade-in max-w-6xl mx-auto py-4 flex flex-col" style="min-height: calc(100vh - 64px);">
         <div class="mb-10 text-left" style="padding: 0 10px;">
           <h1 class="text-4xl sm:text-5xl font-extrabold mb-2 tracking-tight flex flex-col gap-1">
             <span>Your Library</span>
           </h1>
-          <p class="text-base sm:text-lg mb-2" style="color: rgba(255, 255, 255, 0.7);">
+          <p class="text-base sm:text-lg mb-2" style="color: var(--text-secondary);">
             All your entertainment. One place.
           </p>
-          <p class="text-xs sm:text-sm font-medium" style="color: var(--text-secondary);">
+          <p class="text-xs sm:text-sm font-medium" style="color: var(--text-tertiary);">
             ${libs.length} collections &nbsp;·&nbsp; ${libs.reduce((a, l) => a + (l.fileCount || 0), 0)} total files
           </p>
         </div>
@@ -135,45 +135,45 @@ async function renderHome() {
           ${libs.map((lib, i) => renderLibraryCard(lib, i)).join("")}
         </div>
         
-        <div class="mt-auto pt-12 pb-4 w-full">
-          <div class="p-5 rounded-2xl flex flex-wrap items-center justify-between gap-6 w-full" style="background: rgba(20, 20, 35, 0.5); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);">
+        <div class="mt-auto pb-4 w-full" style="margin-top: 80px;">
+          <div class="glass p-5 flex flex-wrap items-center justify-between gap-6 w-full shadow-lg">
             <div class="flex items-center gap-4">
-              <div class="opacity-50">
+              <div class="opacity-50" style="color: var(--text-primary);">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
               </div>
               <div>
-                <div class="text-xs mb-0.5" style="color: var(--text-tertiary);">Server Status</div>
-                <div class="text-sm font-medium flex items-center gap-2">
+                <div class="text-xs mb-0.5 font-semibold tracking-wide uppercase" style="color: var(--text-tertiary);">Server Status</div>
+                <div class="text-sm font-bold flex items-center gap-2" style="color: var(--text-primary);">
                   <div style="width: 8px; height: 8px; border-radius: 50%; background-color: ${sysStatus.status === 'Online' ? '#22c55e' : '#ef4444'}; box-shadow: 0 0 8px ${sysStatus.status === 'Online' ? '#22c55e' : '#ef4444'}; display: inline-block;"></div>
                   <span>${sysStatus.status}</span>
                 </div>
               </div>
             </div>
             <div class="flex items-center gap-4">
-              <div class="opacity-50">
+              <div class="opacity-50" style="color: var(--text-primary);">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
               </div>
               <div>
-                <div class="text-xs mb-0.5" style="color: var(--text-tertiary);">Network</div>
-                <div class="text-sm font-medium text-white">${sysStatus.network}</div>
+                <div class="text-xs mb-0.5 font-semibold tracking-wide uppercase" style="color: var(--text-tertiary);">Network</div>
+                <div class="text-sm font-bold" style="color: var(--text-primary);">${sysStatus.network}</div>
               </div>
             </div>
             <div class="flex items-center gap-4">
-              <div class="opacity-50">
+              <div class="opacity-50" style="color: var(--text-primary);">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
               </div>
               <div>
-                <div class="text-xs mb-0.5" style="color: var(--text-tertiary);">Uptime</div>
-                <div class="text-sm font-medium text-white">${formatUptime(sysStatus.uptime)}</div>
+                <div class="text-xs mb-0.5 font-semibold tracking-wide uppercase" style="color: var(--text-tertiary);">Uptime</div>
+                <div class="text-sm font-bold" style="color: var(--text-primary);">${formatUptime(sysStatus.uptime)}</div>
               </div>
             </div>
             <div class="flex items-center gap-4">
-              <div class="opacity-50">
+              <div class="opacity-50" style="color: var(--text-primary);">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
               </div>
               <div>
-                <div class="text-xs mb-0.5" style="color: var(--text-tertiary);">Current Time</div>
-                <div class="text-sm font-medium text-white">${formatCurrentTime()}</div>
+                <div class="text-xs mb-0.5 font-semibold tracking-wide uppercase" style="color: var(--text-tertiary);">Current Time</div>
+                <div class="text-sm font-bold" style="color: var(--text-primary);">${formatCurrentTime()}</div>
               </div>
             </div>
           </div>
