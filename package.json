@@ -55,6 +55,7 @@
     "jsonwebtoken": "^9.0.3",
     "mime-types": "^3.0.1",
     "sharp": "^0.34.2",
+    "systeminformation": "^5.33.1",
     "tailwindcss": "^3.4.19"
   },
   "devDependencies": {

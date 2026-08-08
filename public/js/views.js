@@ -776,3 +776,107 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // -----------------------------------------------------------------------
+// System Status View
+// -----------------------------------------------------------------------
+window.renderStatus = async function() {
+  const content = document.getElementById('app-content');
+  const homeIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>`;
+  
+  // Initial loader only on first render
+  if (!document.getElementById('status-dashboard')) {
+    content.innerHTML = '<div class="p-8 flex justify-center"><div class="loader"></div></div>';
+  }
+
+  const updateDashboard = async () => {
+    if (window.location.hash !== '#/status') return; // Stop polling if navigated away
+
+    try {
+      const res = await api.authFetch('/api/status/system');
+      if (!res.ok) throw new Error('Failed to fetch status');
+      const data = await res.json();
+
+      if (window.location.hash !== '#/status') return;
+
+      const renderCard = (title, icon, details) => `
+        <div class="glass p-5 mb-6">
+          <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">${icon} ${title}</h3>
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            ${details.map(d => `
+              <div>
+                <span style="color: var(--text-tertiary);">${d.label}</span>
+                <p class="font-mono mt-1">${d.value}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      const formatTemp = t => t && t > 0 ? `${t.toFixed(1)}°C` : 'N/A';
+      const formatSize = m => m ? `${(m / (1024 * 1024 * 1024)).toFixed(2)} GB` : 'N/A';
+
+      let html = `
+        <div id="status-dashboard" class="max-w-4xl mx-auto p-4 sm:p-6 pb-24">
+          <div class="mb-8">
+            <h1 class="text-2xl font-bold tracking-tight mb-2">System Status</h1>
+            <p style="color: var(--text-secondary);">Live hardware and network diagnostics.</p>
+          </div>
+      `;
+
+      // Network
+      html += renderCard('Network', homeIcon, [
+        { label: 'Host IP', value: data.network.ip },
+        { label: 'Port', value: data.network.port },
+        { label: 'Wi-Fi SSID', value: data.network.ssid }
+      ]);
+
+      // OS
+      html += renderCard('Operating System', ICONS.settings, [
+        { label: 'Platform', value: `${data.os.platform} (${data.os.arch})` },
+        { label: 'Distro', value: data.os.distro },
+        { label: 'Kernel', value: data.os.kernel },
+        { label: 'Uptime', value: `${(data.os.uptime / 3600).toFixed(1)} Hours` }
+      ]);
+
+      // CPU
+      html += renderCard('Processor', ICONS.play, [
+        { label: 'Brand', value: `${data.cpu.manufacturer} ${data.cpu.brand}` },
+        { label: 'Cores', value: `${data.cpu.cores} (${data.cpu.physicalCores} Physical)` },
+        { label: 'Speed', value: `${data.cpu.speed} GHz (Max: ${data.cpu.speedMax} GHz)` },
+        { label: 'Temperature', value: formatTemp(data.cpu.temperature) }
+      ]);
+
+      // RAM
+      html += renderCard('Memory (RAM)', ICONS.music, [
+        { label: 'Total', value: formatSize(data.ram.total) },
+        { label: 'Available', value: formatSize(data.ram.available) },
+        { label: 'Used', value: formatSize(data.ram.used) },
+        { label: 'Free', value: formatSize(data.ram.free) }
+      ]);
+
+      // GPU
+      if (data.gpu && data.gpu.length > 0) {
+        data.gpu.forEach((g, i) => {
+          html += renderCard(`Graphics Processing Unit (${i + 1})`, ICONS.film, [
+            { label: 'Model', value: `${g.vendor} ${g.model}` },
+            { label: 'VRAM', value: `${g.vram} MB` },
+            { label: 'Temperature', value: formatTemp(g.temperature) },
+            { label: 'Dynamic VRAM', value: g.vramDynamic ? 'Yes' : 'No' }
+          ]);
+        });
+      }
+
+      html += '</div>';
+      content.innerHTML = html;
+
+      // Poll every 3 seconds
+      setTimeout(updateDashboard, 3000);
+
+    } catch (err) {
+      if (window.location.hash === '#/status') {
+        content.innerHTML = `<div class="p-8 text-center text-red-400">Error loading status: ${err.message}</div>`;
+      }
+    }
+  };
+
+  updateDashboard();
+};

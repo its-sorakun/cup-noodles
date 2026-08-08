@@ -757,26 +757,6 @@
           </div>
         </div>
 
-        <div class="glass p-5 mt-8">
-          <h3 class="text-sm font-semibold mb-3">Server Info</h3>
-          <div class="grid grid-cols-2 gap-4 text-sm mb-4">
-            <div>
-              <span style="color: var(--text-tertiary);">Port</span>
-              <p class="font-mono">${config.server?.port || 1337}</p>
-            </div>
-            <div>
-              <span style="color: var(--text-tertiary);">Host</span>
-              <p class="font-mono">${config.server?.host || "0.0.0.0"}</p>
-            </div>
-          </div>
-          <div class="pt-3 border-t" style="border-color: rgba(255,255,255,0.1);">
-            <span style="color: var(--text-tertiary); font-size: 12px;">You are streaming at:</span>
-            <div class="mt-1 flex items-center gap-3">
-              <a href="http://127.0.0.1:${config.server?.port || 1337}" target="_blank" class="font-mono text-sm hover:underline" style="color: #60a5fa;">http://127.0.0.1:${config.server?.port || 1337}</a>
-              <a href="http://127.0.0.1:${config.server?.port || 1337}" target="_blank" class="btn-glass" style="padding: 4px 12px; font-size: 11px;">Open in Web</a>
-            </div>
-          </div>
-        </div>
 
         <div class="glass p-5 mt-8">
           <h3 class="text-sm font-semibold mb-3">Storage & Cache</h3>

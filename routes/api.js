@@ -42,9 +42,87 @@ function processThumbnailQueue() {
   });
 }
 
+const si = require("systeminformation");
+
 // Health check
 router.get("/ping", (req, res) => {
   res.json({ message: "pong", timestamp: Date.now() });
+});
+
+// System Status Hardware Info
+router.get("/status/system", async (req, res) => {
+  try {
+    const config = await loadConfig();
+    
+    // Fetch system information concurrently to reduce response time
+    const [osInfo, cpu, mem, graphics, cpuTemp, wifi] = await Promise.all([
+      si.osInfo(),
+      si.cpu(),
+      si.mem(),
+      si.graphics(),
+      si.cpuTemperature(),
+      si.wifiConnections()
+    ]);
+    
+    // Network Info
+    let ipAddress = config.server.host || '0.0.0.0';
+    if (ipAddress === '0.0.0.0' || ipAddress === '') {
+      const interfaces = os.networkInterfaces();
+      for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+          if (iface.family === "IPv4" && !iface.internal) {
+            ipAddress = iface.address;
+            break;
+          }
+        }
+        if (ipAddress !== '0.0.0.0' && ipAddress !== '') break;
+      }
+    }
+
+    const network = {
+      ip: ipAddress,
+      port: config.server.port || 1337,
+      ssid: wifi && wifi.length > 0 ? wifi[0].ssid : 'Ethernet / Unknown'
+    };
+    
+    // Format Data
+    res.json({
+      network,
+      os: {
+        platform: osInfo.platform,
+        distro: osInfo.distro,
+        release: osInfo.release,
+        kernel: osInfo.kernel,
+        arch: osInfo.arch,
+        uptime: os.uptime()
+      },
+      cpu: {
+        manufacturer: cpu.manufacturer,
+        brand: cpu.brand,
+        cores: cpu.cores,
+        physicalCores: cpu.physicalCores,
+        speed: cpu.speed,
+        speedMax: cpu.speedMax,
+        temperature: cpuTemp.main
+      },
+      ram: {
+        total: mem.total,
+        free: mem.free,
+        available: mem.available,
+        used: mem.used
+      },
+      gpu: graphics.controllers.map(g => ({
+        model: g.model,
+        vendor: g.vendor,
+        vram: g.vram,
+        vramDynamic: g.vramDynamic,
+        temperature: g.temperatureGpu
+      }))
+    });
+  } catch (error) {
+    console.error("[api] Error fetching system information:", error);
+    res.status(500).json({ error: "Failed to fetch system metrics", details: error.message });
+  }
 });
 
 // System Status

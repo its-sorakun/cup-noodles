@@ -53,6 +53,8 @@
       await renderHome();
     } else if (route === "/settings") {
       await renderSettings();
+    } else if (route === "/status") {
+      await renderStatus();
     } else if (route.startsWith("/library/")) {
       const raw = route.replace("/library/", "");
       const segments = raw.split("/").map(decodeURIComponent);
@@ -72,6 +74,8 @@
       document.querySelector('[data-route="home"]')?.classList.add("active");
     } else if (route === "/settings") {
       document.querySelector('[data-route="settings"]')?.classList.add("active");
+    } else if (route === "/status") {
+      document.querySelector('[data-route="status"]')?.classList.add("active");
     }
   }
 
