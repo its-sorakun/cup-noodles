@@ -88,24 +88,33 @@ class TaskQueue {
   }
 }
 
-const tmdbQueue = new TaskQueue(20);
+const tmdbQueue = new TaskQueue(5);
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 async function fetchWithRetry(url, options = {}, retries = 3) {
   for (let i = 0; i < retries; i++) {
-    const res = await fetch(url, options);
-    if (res.status === 429) {
-      const retryAfter = res.headers.get("Retry-After");
-      const waitTime = retryAfter ? parseInt(retryAfter, 10) * 1000 : 1500 * Math.pow(2, i);
-      console.warn(`[metadata] TMDB Rate limit hit (429). Retrying after ${waitTime}ms...`);
-      await sleep(waitTime);
-      continue;
+    try {
+      const res = await fetch(url, options);
+      if (res.status === 429) {
+        const retryAfter = res.headers.get("Retry-After");
+        const waitTime = retryAfter ? parseInt(retryAfter, 10) * 1000 : 1500 * Math.pow(2, i);
+        console.warn(`[metadata] TMDB Rate limit hit (429). Retrying after ${waitTime}ms...`);
+        await sleep(waitTime);
+        continue;
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res;
+    } catch (err) {
+      if (i < retries - 1 && err.message !== "Max retries exceeded") {
+        console.warn(`[metadata] Fetch error (${err.message}). Retrying in ${1000 * Math.pow(2, i)}ms...`);
+        await sleep(1000 * Math.pow(2, i));
+        continue;
+      }
+      throw err;
     }
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res;
   }
-  throw new Error("Max retries exceeded for 429");
+  throw new Error("Max retries exceeded");
 }
 
 async function searchTMDBList(query, year = null) {
@@ -146,7 +155,27 @@ async function searchTMDBList(query, year = null) {
 
 async function searchTMDB(query, year = null) {
   const results = await searchTMDBList(query, year);
-  return results.length > 0 ? results[0] : null;
+  if (results.length === 0) return null;
+  const bestMatch = results[0];
+  
+  const apiKey = process.env.TMDB_API_KEY;
+  if (!apiKey || apiKey === "your_tmdb_api_key_here") return bestMatch;
+  
+  try {
+    return await tmdbQueue.add(async () => {
+      const url = `https://api.themoviedb.org/3/${bestMatch.type}/${bestMatch.id}?api_key=${apiKey}`;
+      const res = await fetchWithRetry(url);
+      const result = await res.json();
+      
+      return {
+        ...bestMatch,
+        genres: result.genres ? result.genres.map(g => g.name) : []
+      };
+    });
+  } catch (err) {
+    console.error(`[metadata] TMDB detail fetch failed for ${bestMatch.id}:`, err.message);
+    return bestMatch;
+  }
 }
 
 /**
@@ -203,7 +232,8 @@ async function setMetadataOverride(filename, tmdbId, type = "movie", applyToFold
       releaseYear: result.release_date ? result.release_date.split("-")[0] : (result.first_air_date ? result.first_air_date.split("-")[0] : null),
       posterUrl: result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}` : null,
       backdropUrl: result.backdrop_path ? `https://image.tmdb.org/t/p/w1280${result.backdrop_path}` : null,
-      rating: result.vote_average ? parseFloat(result.vote_average).toFixed(1) : null
+      rating: result.vote_average ? parseFloat(result.vote_average).toFixed(1) : null,
+      genres: result.genres ? result.genres.map(g => g.name) : []
     };
 
     if (applyToFolder) {

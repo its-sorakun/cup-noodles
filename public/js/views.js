@@ -498,6 +498,7 @@ function openMediaDetails(library, index, filename, meta) {
           <div style="display:flex; gap:15px; margin-bottom:20px; align-items:center; flex-wrap:wrap;">
             ${meta.rating ? `<div class="badge-rating" style="font-size:1rem; padding:4px 10px;">⭐ ${meta.rating}</div>` : ''}
             ${meta.releaseYear ? `<div class="badge-year" style="font-size:1rem; padding:4px 10px;">${meta.releaseYear}</div>` : ''}
+            ${meta.genres && meta.genres.length > 0 ? meta.genres.map(g => `<div class="badge-genre" style="font-size:1rem; padding:4px 10px; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 6px; color: #d8b4fe;">${escapeHtml(g)}</div>`).join('') : ''}
           </div>
           
           <p class="media-details-overview" style="font-size:1.1rem; line-height:1.6; color:rgba(255,255,255,0.8); margin-bottom:40px;">
