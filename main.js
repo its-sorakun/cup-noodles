@@ -24,7 +24,7 @@ async function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
     },
-    icon: path.join(__dirname, "public", "favicon.ico") // Using favicon for now
+    icon: path.join(__dirname, "public", "img", "icon.ico")
   });
 
   // Remove default menu for a cleaner app feel
