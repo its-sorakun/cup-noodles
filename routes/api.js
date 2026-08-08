@@ -55,13 +55,14 @@ router.get("/status/system", async (req, res) => {
     const config = await loadConfig();
     
     // Fetch system information concurrently to reduce response time
-    const [osInfo, cpu, mem, graphics, cpuTemp, wifi] = await Promise.all([
+    const [osInfo, cpu, mem, graphics, cpuTemp, wifi, load] = await Promise.all([
       si.osInfo(),
       si.cpu(),
       si.mem(),
       si.graphics(),
       si.cpuTemperature(),
-      si.wifiConnections()
+      si.wifiConnections(),
+      si.currentLoad()
     ]);
     
     // Network Info
@@ -99,11 +100,12 @@ router.get("/status/system", async (req, res) => {
       cpu: {
         manufacturer: cpu.manufacturer,
         brand: cpu.brand,
-        cores: cpu.cores,
-        physicalCores: cpu.physicalCores,
         speed: cpu.speed,
         speedMax: cpu.speedMax,
-        temperature: cpuTemp.main
+        cores: cpu.cores,
+        physicalCores: cpu.physicalCores,
+        temperature: cpuTemp.main,
+        load: load.currentLoad
       },
       ram: {
         total: mem.total,

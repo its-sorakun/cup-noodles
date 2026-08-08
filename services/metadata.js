@@ -182,14 +182,14 @@ async function searchTMDB(query, year = null) {
  * Gets metadata for a file. Uses cache if available, otherwise queries TMDB.
  */
 async function getMetadata(filename) {
-  const dirKey = "DIR:" + path.dirname(filename);
-  if (metadataCache[dirKey] !== undefined) {
-    return metadataCache[dirKey];
-  }
-
   if (metadataCache[filename] !== undefined) {
     // If it's cached (even as null for not found), return it
     return metadataCache[filename];
+  }
+
+  const dirKey = "DIR:" + path.dirname(filename);
+  if (metadataCache[dirKey] !== undefined) {
+    return metadataCache[dirKey];
   }
 
   const { query, year } = cleanFilename(filename);

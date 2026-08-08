@@ -791,7 +791,7 @@ window.renderStatus = async function() {
     if (window.location.hash !== '#/status') return; // Stop polling if navigated away
 
     try {
-      const res = await api.authFetch('/api/status/system');
+      const res = await api.authFetch(`/api/status/system?_t=${Date.now()}`, { cache: 'no-store' });
       if (!res.ok) throw new Error('Failed to fetch status');
       const data = await res.json();
 
@@ -842,6 +842,7 @@ window.renderStatus = async function() {
         { label: 'Brand', value: `${data.cpu.manufacturer} ${data.cpu.brand}` },
         { label: 'Cores', value: `${data.cpu.cores} (${data.cpu.physicalCores} Physical)` },
         { label: 'Speed', value: `${data.cpu.speed} GHz (Max: ${data.cpu.speedMax} GHz)` },
+        { label: 'Load', value: data.cpu.load ? `${data.cpu.load.toFixed(1)}%` : 'N/A' },
         { label: 'Temperature', value: formatTemp(data.cpu.temperature) }
       ]);
 
