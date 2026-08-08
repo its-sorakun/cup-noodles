@@ -98,20 +98,85 @@ async function renderHome() {
 
   const libs = state.libraries;
 
+  let sysStatus = { uptime: 0, network: "Unknown", status: "Online" };
+  try {
+    const res = await api.authFetch("/api/system/status");
+    if (res.ok) sysStatus = await res.json();
+  } catch (err) {
+    console.warn("Could not load system status:", err);
+  }
+
+  function formatUptime(seconds) {
+    const d = Math.floor(seconds / (3600*24));
+    const h = Math.floor(seconds % (3600*24) / 3600);
+    const m = Math.floor(seconds % 3600 / 60);
+    return `${d}d ${h}h ${m}m`;
+  }
+  
+  function formatCurrentTime() {
+    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
   $content.innerHTML = `
-      <div class="fade-in max-w-6xl mx-auto py-4">
-        <div class="mb-12 text-center">
-          <h1 class="text-3xl sm:text-5xl font-extrabold mb-4 tracking-tight flex flex-col items-center gap-1">
+      <div class="fade-in max-w-6xl mx-auto py-4 flex flex-col" style="min-height: calc(100vh - 100px);">
+        <div class="mb-10 text-left" style="padding: 0 10px;">
+          <h1 class="text-4xl sm:text-5xl font-extrabold mb-2 tracking-tight flex flex-col gap-1">
             <span>Your Library</span>
-            <span class="text-lg sm:text-xl font-bold opacity-30">ライブラリ</span>
           </h1>
-          <p class="text-sm sm:text-base font-medium" style="color: var(--text-secondary);">
+          <p class="text-base sm:text-lg mb-2" style="color: rgba(255, 255, 255, 0.7);">
+            All your entertainment. One place.
+          </p>
+          <p class="text-xs sm:text-sm font-medium" style="color: var(--text-secondary);">
             ${libs.length} collections &nbsp;·&nbsp; ${libs.reduce((a, l) => a + (l.fileCount || 0), 0)} total files
           </p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children justify-center mx-auto">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children justify-center mx-auto w-full flex-grow content-start">
           ${libs.map((lib, i) => renderLibraryCard(lib, i)).join("")}
+        </div>
+        
+        <div class="mt-auto pt-12 pb-4 w-full">
+          <div class="p-5 rounded-2xl flex flex-wrap items-center justify-between gap-6 w-full" style="background: rgba(20, 20, 35, 0.5); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);">
+            <div class="flex items-center gap-4">
+              <div class="opacity-50">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+              </div>
+              <div>
+                <div class="text-xs mb-0.5" style="color: var(--text-tertiary);">Server Status</div>
+                <div class="text-sm font-medium flex items-center gap-2">
+                  <div style="width: 8px; height: 8px; border-radius: 50%; background-color: ${sysStatus.status === 'Online' ? '#22c55e' : '#ef4444'}; box-shadow: 0 0 8px ${sysStatus.status === 'Online' ? '#22c55e' : '#ef4444'}; display: inline-block;"></div>
+                  <span>${sysStatus.status}</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="opacity-50">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+              </div>
+              <div>
+                <div class="text-xs mb-0.5" style="color: var(--text-tertiary);">Network</div>
+                <div class="text-sm font-medium text-white">${sysStatus.network}</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="opacity-50">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              </div>
+              <div>
+                <div class="text-xs mb-0.5" style="color: var(--text-tertiary);">Uptime</div>
+                <div class="text-sm font-medium text-white">${formatUptime(sysStatus.uptime)}</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="opacity-50">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              </div>
+              <div>
+                <div class="text-xs mb-0.5" style="color: var(--text-tertiary);">Current Time</div>
+                <div class="text-sm font-medium text-white">${formatCurrentTime()}</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     `;
@@ -142,22 +207,28 @@ function renderLibraryCard(lib, index) {
   }
 
   const typeLabel = lib.type === "video" ? "Video" : lib.type === "image" ? "Images" : lib.type === "audio" ? "Audio" : "Mixed";
+  
+  // Clean library name to match background image filenames (e.g. "TV Shows" -> "tvshows")
+  const bgName = lib.name.toLowerCase().replace(/[^a-z]/g, "");
+  const bgImage = `/img/bg_${bgName}.png`;
 
   return `
-      <div class="glass-card p-6 ${configured ? "" : "opacity-50"}" data-glow="${glow}" data-library="${escapeHtml(lib.name)}" id="library-card-${index}">
-        <div class="flex items-start justify-between mb-4">
-          <div class="w-12 h-12 rounded-xl flex items-center justify-center icon-box">
+      <div class="glass-card p-6 flex flex-col justify-between ${configured ? "" : "opacity-50"}" data-glow="${glow}" data-library="${escapeHtml(lib.name)}" id="library-card-${index}" style="min-height: 280px; border-radius: 16px; background-image: linear-gradient(to bottom, rgba(15, 12, 41, 0.5) 0%, rgba(48, 43, 99, 0.8) 50%, rgba(36, 36, 62, 0.95) 100%), url('${bgImage}'); background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.6); transition: all 0.3s ease; position: relative; overflow: hidden;">
+        <div class="flex items-start justify-between mb-8 relative z-10">
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center icon-box" style="background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1);">
             ${icon}
           </div>
           ${statusPill}
         </div>
-        <h3 class="text-lg font-semibold mb-1">${escapeHtml(lib.name)}</h3>
-        <p class="text-xs mb-3" style="color: var(--text-tertiary);">
-          ${escapeHtml(lib.description || typeLabel)}
-        </p>
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-medium" style="color: var(--text-tertiary);">${typeLabel}</span>
-          ${configured && count > 0 ? `<span class="text-xs" style="color: var(--text-secondary);">Browse →</span>` : ""}
+        <div class="relative z-10 flex flex-col flex-grow justify-end">
+          <h3 class="text-xl font-bold mb-1 tracking-tight text-white">${escapeHtml(lib.name)}</h3>
+          <p class="text-sm mb-4" style="color: rgba(255,255,255,0.6);">
+            ${escapeHtml(lib.description || typeLabel)}
+          </p>
+          <div class="flex items-center justify-between mt-auto">
+            <span class="text-xs font-medium uppercase tracking-wider" style="color: rgba(255,255,255,0.5);">${typeLabel}</span>
+            ${configured && count > 0 ? `<span class="text-xs font-semibold text-white tracking-wide">Browse →</span>` : ""}
+          </div>
         </div>
       </div>
     `;

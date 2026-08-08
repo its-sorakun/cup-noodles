@@ -7,6 +7,7 @@ const crypto = require("node:crypto");
 const { spawn } = require("node:child_process");
 const { scanAll, scanByName, loadConfig } = require("../mediascanner");
 const paths = require("../services/paths");
+const os = require("node:os");
 
 const router = express.Router();
 
@@ -44,6 +45,34 @@ function processThumbnailQueue() {
 // Health check
 router.get("/ping", (req, res) => {
   res.json({ message: "pong", timestamp: Date.now() });
+});
+
+// System Status
+router.get("/system/status", (req, res) => {
+  try {
+    const uptime = os.uptime();
+    
+    // Find local IP address
+    let ipAddress = "Unknown";
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+      for (const iface of interfaces[name]) {
+        if (iface.family === "IPv4" && !iface.internal) {
+          ipAddress = iface.address;
+          break;
+        }
+      }
+      if (ipAddress !== "Unknown") break;
+    }
+
+    res.json({
+      uptime,
+      network: ipAddress,
+      status: "Online"
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to get system status" });
+  }
 });
 
 // Get current config (libraries list without scanning files)
