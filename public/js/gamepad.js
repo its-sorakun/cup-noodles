@@ -58,6 +58,21 @@ window.GamepadManager = (function() {
         }
       }
     });
+
+    window.addEventListener('gamepad:back', () => {
+      // Priority 1: Close media details overlay if open
+      const detailsView = document.getElementById('media-details-view');
+      if (detailsView) {
+        detailsView.remove();
+        return;
+      }
+      
+      // Priority 2: Click the global back button if present (e.g. from Library to Home)
+      const backBtn = document.getElementById('back-btn');
+      if (backBtn) {
+        backBtn.click();
+      }
+    });
   }
 
   function getFocusableElements() {
@@ -221,9 +236,21 @@ window.GamepadManager = (function() {
       else if (gp.buttons[14]?.pressed || gp.axes[0] < -0.5) dispatchDirection('left');
       else if (gp.buttons[15]?.pressed || gp.axes[0] > 0.5) dispatchDirection('right');
       
-      // Buttons
+      // Face Buttons
       dispatchButton('confirm', gp.buttons[0]?.pressed); // A / Cross
       dispatchButton('back', gp.buttons[1]?.pressed);    // B / Circle
+      dispatchButton('x', gp.buttons[2]?.pressed);       // X / Square
+      dispatchButton('y', gp.buttons[3]?.pressed);       // Y / Triangle
+      
+      // Bumpers & Triggers
+      dispatchButton('l1', gp.buttons[4]?.pressed);      // LB / L1
+      dispatchButton('r1', gp.buttons[5]?.pressed);      // RB / R1
+      dispatchButton('l2', gp.buttons[6]?.pressed);      // LT / L2
+      dispatchButton('r2', gp.buttons[7]?.pressed);      // RT / R2
+      
+      // System Buttons
+      dispatchButton('select', gp.buttons[8]?.pressed);  // View / Share
+      dispatchButton('start', gp.buttons[9]?.pressed);   // Menu / Options
     }
     
     requestAnimationFrame(pollGamepads);

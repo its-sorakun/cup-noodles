@@ -489,24 +489,23 @@ function openMediaDetails(library, index, filename, meta) {
         <button onclick="document.getElementById('media-details-view').remove()" style="background:transparent; border:none; color:white; font-size:1.5rem; cursor:pointer;">${ICONS.back || '←'}</button>
       </div>
 
-      <div style="position:relative; z-index:1; flex:1; display:flex; gap:40px; padding: 40px 10%; align-items:center;">
-        <img src="${posterUrl}" style="width:300px; border-radius:12px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+      <div class="media-details-content" style="position:relative; z-index:1; flex:1; display:flex; gap:40px; padding: 40px 10%; align-items:center;">
+        <img class="media-details-poster" src="${posterUrl}" style="width:300px; border-radius:12px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
         
-        <div style="flex:1;">
-          <h1 style="font-size:3rem; font-weight:800; margin-bottom:10px; line-height:1.1;">${escapeHtml(meta.title)}</h1>
+        <div class="media-details-info" style="flex:1;">
+          <h1 class="media-details-title" style="font-size:3rem; font-weight:800; margin-bottom:10px; line-height:1.1;">${escapeHtml(meta.title)}</h1>
           
-          <div style="display:flex; gap:15px; margin-bottom:20px; align-items:center;">
+          <div style="display:flex; gap:15px; margin-bottom:20px; align-items:center; flex-wrap:wrap;">
             ${meta.rating ? `<div class="badge-rating" style="font-size:1rem; padding:4px 10px;">⭐ ${meta.rating}</div>` : ''}
             ${meta.releaseYear ? `<div class="badge-year" style="font-size:1rem; padding:4px 10px;">${meta.releaseYear}</div>` : ''}
           </div>
           
-          <p style="font-size:1.1rem; line-height:1.6; color:rgba(255,255,255,0.8); margin-bottom:40px;">
+          <p class="media-details-overview" style="font-size:1.1rem; line-height:1.6; color:rgba(255,255,255,0.8); margin-bottom:40px;">
             ${escapeHtml(meta.overview || "No description available.")}
           </p>
           
           <div style="display:flex; gap:20px;">
             <button id="details-play-btn" class="btn btn-primary" style="padding: 15px 40px; font-size:1.2rem;">▶ Play</button>
-            <button onclick="window.openFixMatchDialog('${escapeHtml(filename).replace(/'/g, "\\'")}')" class="btn btn-secondary" style="padding: 15px 30px;">Fix Match</button>
           </div>
         </div>
       </div>

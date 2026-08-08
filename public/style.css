@@ -1569,3 +1569,27 @@ video::cue {
     opacity: 0;
   }
 }
+
+/* --- Media Details View (Mobile Optimizations) --- */
+@media (max-width: 768px) {
+  .media-details-content {
+    flex-direction: column !important;
+    padding: 20px 5% !important;
+    gap: 20px !important;
+  }
+  .media-details-poster {
+    width: 220px !important;
+  }
+  .media-details-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .media-details-title {
+    font-size: 2.2rem !important;
+  }
+  .media-details-overview {
+    font-size: 1rem !important;
+  }
+}
