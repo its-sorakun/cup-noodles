@@ -159,6 +159,8 @@ window.MusicPlayer = {
     const file = this.queue[index];
     if (!file) return;
 
+    this.currentIndex = index;
+
     this.audio.src = api.streamUrl(this.library.name, file.relativePath);
     this.audio.play().catch(e => console.warn('Autoplay prevented', e));
 

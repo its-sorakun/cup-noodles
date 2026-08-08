@@ -146,7 +146,31 @@ router.get("/lyrics", async (req, res) => {
       return res.json({ lyrics: data[0].plainLyrics });
     }
 
-    // If both attempts fail
+    // Attempt 3: Aggressive Fallback (Strip remixes, versions, covers, feat. from Title)
+    let aggressiveTitle = cleanTitle;
+    if (aggressiveTitle.toLowerCase().match(/remix|ver\.|version|acoustic|instrumental|cover|feat\.|ft\./)) {
+      aggressiveTitle = aggressiveTitle.split(/[-(\[]|feat\.|ft\./i)[0].trim();
+      if (aggressiveTitle && aggressiveTitle !== cleanTitle) {
+        url = `https://lrclib.net/api/search?q=${encodeURIComponent(aggressiveTitle + " " + cleanArtist)}`;
+        apiRes = await fetch(url, { headers: { 'User-Agent': 'CupNoodlesMediaServer/1.0' } });
+        data = await apiRes.json();
+
+        if (Array.isArray(data) && data.length > 0 && data[0].plainLyrics) {
+          return res.json({ lyrics: data[0].plainLyrics });
+        }
+        
+        // Attempt 4: Aggressive Fallback with just Title
+        url = `https://lrclib.net/api/search?q=${encodeURIComponent(aggressiveTitle)}`;
+        apiRes = await fetch(url, { headers: { 'User-Agent': 'CupNoodlesMediaServer/1.0' } });
+        data = await apiRes.json();
+
+        if (Array.isArray(data) && data.length > 0 && data[0].plainLyrics) {
+          return res.json({ lyrics: data[0].plainLyrics });
+        }
+      }
+    }
+
+    // If all attempts fail
     res.status(404).json({ error: "No lyrics found" });
   } catch (err) {
     res.status(500).json({ error: err.message });
