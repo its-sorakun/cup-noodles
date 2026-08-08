@@ -6,8 +6,8 @@ async function renderLogin() {
       <div class="weeb-login-wrapper fade-in flex-col gap-8 sm:gap-12">
         
         <!-- Centered Logo (Flow Layout) -->
-        <div class="flex justify-center items-center gap-4 w-full -mt-28 sm:-mt-36 mb-8 sm:mb-12">
-          <span class="text-4xl sm:text-5xl" style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Segoe UI Symbol', 'Android Emoji', 'EmojiSymbols';">🍜</span>
+        <div class="flex flex-col items-center gap-4 mb-8 weeb-title">
+          <img src="/img/icon.png" alt="Cup Noodles Logo" style="width: 180px; height: 180px; object-fit: contain;">
           <span class="text-3xl sm:text-4xl font-extrabold tracking-tight" style="color: var(--text-primary);">
             Cup Noodles
           </span>
@@ -16,14 +16,12 @@ async function renderLogin() {
         <div class="weeb-login-glass group">
           
           <div class="relative z-10 w-full">
-            <div class="mb-8">
+            <div class="mb-8 text-center">
               <h2 class="weeb-title text-3xl sm:text-4xl flex flex-col gap-2">
-                <span>Okaeri, Senpai! ~</span>
-                <span class="text-xl sm:text-2xl opacity-40 font-bold">おかえり、先輩！</span>
+                <span>Welcome Back!</span>
               </h2>
               <p class="weeb-subtitle">
-                Please sign in to your personal vault<br>
-                <span class="text-xs opacity-50 mt-1 inline-block">(プライベート保管庫へサインインしてください)</span>
+                Please sign in to your personal vault
               </p>
             </div>
             
@@ -107,12 +105,12 @@ async function renderHome() {
   }
 
   function formatUptime(seconds) {
-    const d = Math.floor(seconds / (3600*24));
-    const h = Math.floor(seconds % (3600*24) / 3600);
+    const d = Math.floor(seconds / (3600 * 24));
+    const h = Math.floor(seconds % (3600 * 24) / 3600);
     const m = Math.floor(seconds % 3600 / 60);
     return `${d}d ${h}h ${m}m`;
   }
-  
+
   function formatCurrentTime() {
     return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
@@ -207,7 +205,7 @@ function renderLibraryCard(lib, index) {
   }
 
   const typeLabel = lib.type === "video" ? "Video" : lib.type === "image" ? "Images" : lib.type === "audio" ? "Audio" : "Mixed";
-  
+
   // Clean library name to match background image filenames (e.g. "TV Shows" -> "tvshows")
   const bgName = lib.name.toLowerCase().replace(/[^a-z]/g, "");
   const bgImage = `/img/bg_${bgName}.png`;
